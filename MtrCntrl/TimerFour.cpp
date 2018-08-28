@@ -23,11 +23,11 @@
  */
 
 #include "TimerFour.h"
-TimerFour Timer4;
+
 
 ISR(TIMER4_OVF_vect)          // interrupt service routine that wraps a user defined function supplied by attachInterrupt
 {
-  Timer4.isrCallback();
+  teleTimer.isrCallback();
 }
 
 void TimerFour::initialize(long microseconds)
@@ -56,9 +56,9 @@ void TimerFour::setPwmDuty(char pin, int duty) // expects duty cycle to be 12 bi
   unsigned long dutyCycle = pwmPeriod;
   dutyCycle *= duty;
   dutyCycle >>= 12;
-  if(pin == 46) {OCR4A = dutyCycle;}
-  if(pin == 45) {OCR4B = dutyCycle;}
-  if(pin == 44) {OCR4C = dutyCycle;}
+  if(pin == 8) {OCR4A = dutyCycle;}
+  if(pin == 7) {OCR4B = dutyCycle;}
+  if(pin == 6) {OCR4C = dutyCycle;}
 }
 
 void TimerFour::pwm(char pin, int duty, long microseconds)  // expects duty cycle to be 12 bit 4096 (50%=2048, 100%=4096)
@@ -67,18 +67,18 @@ void TimerFour::pwm(char pin, int duty, long microseconds)  // expects duty cycl
   
   // sets data direction register for pwm output pin
   // activates the output pin
-  if(pin == 46) { DDRL |= _BV(PORTL3); TCCR4A |= _BV(COM4A1); }
-  if(pin == 45) { DDRL |= _BV(PORTL4); TCCR4A |= _BV(COM4B1); }
-  if(pin == 44) { DDRL |= _BV(PORTL5); TCCR4A |= _BV(COM4C1); }
+  if(pin == 8) { DDRL |= _BV(PORTL3); TCCR4A |= _BV(COM4A1); }
+  if(pin == 7) { DDRL |= _BV(PORTL4); TCCR4A |= _BV(COM4B1); }
+  if(pin == 6) { DDRL |= _BV(PORTL5); TCCR4A |= _BV(COM4C1); }
   setPwmDuty(pin, duty);
   start();
 }
 
 void TimerFour::disablePwm(char pin)
 {
-  if(pin == 46) TCCR4A &= ~_BV(COM4A1);   // clear the bit that enables pwm on PL4
-  if(pin == 45) TCCR4A &= ~_BV(COM4B1);   // clear the bit that enables pwm on PL4
-  if(pin == 44) TCCR4A &= ~_BV(COM4C1);   // clear the bit that enables pwm on PL5
+  if(pin == 8) TCCR4A &= ~_BV(COM4A1);   // clear the bit that enables pwm on PL4
+  if(pin == 7) TCCR4A &= ~_BV(COM4B1);   // clear the bit that enables pwm on PL4
+  if(pin == 6) TCCR4A &= ~_BV(COM4C1);   // clear the bit that enables pwm on PL5
 }
 
 void TimerFour::attachInterrupt(void (*isr)(), long microseconds)

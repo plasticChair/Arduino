@@ -23,12 +23,11 @@
  */
 
 #include "TimerThree.h"
-
-TimerThree Timer3; // preinstatiate
+ // preinstatiate
 
 ISR(TIMER3_OVF_vect)          // interrupt service routine that wraps a user defined function supplied by attachInterrupt
 {
-  Timer3.isrCallback();
+  cntrlTimer.isrCallback();
 }
 
 void TimerThree::initialize(long microseconds)
@@ -57,9 +56,9 @@ void TimerThree::setPwmDuty(char pin, int duty) // expects duty cycle to be 12 b
   unsigned long dutyCycle = pwmPeriod;
   dutyCycle *= duty;
   dutyCycle >>= 12;
-  if(pin == 46) {OCR3A = dutyCycle;}
-  if(pin == 45) {OCR3B = dutyCycle;}
-  if(pin == 44) {OCR3C = dutyCycle;}
+  if(pin == 5) {OCR3A = dutyCycle;}
+  if(pin == 3) {OCR3B = dutyCycle;}
+  if(pin == 2) {OCR3C = dutyCycle;}
 }
 
 void TimerThree::pwm(char pin, int duty, long microseconds)  // expects duty cycle to be 12 bit 4096 (50%=2048, 100%=4096)
@@ -68,18 +67,18 @@ void TimerThree::pwm(char pin, int duty, long microseconds)  // expects duty cyc
   
 	// sets data direction register for pwm output pin
 	// activates the output pin
-  if(pin == 46) { DDRL |= _BV(PORTL3); TCCR3A |= _BV(COM3A1); }
-  if(pin == 45) { DDRL |= _BV(PORTL4); TCCR3A |= _BV(COM3B1); }
-  if(pin == 44) { DDRL |= _BV(PORTL5); TCCR3A |= _BV(COM3C1); }
+  if(pin == 5) { DDRL |= _BV(PORTL3); TCCR3A |= _BV(COM3A1); }
+  if(pin == 3) { DDRL |= _BV(PORTL4); TCCR3A |= _BV(COM3B1); }
+  if(pin == 2) { DDRL |= _BV(PORTL5); TCCR3A |= _BV(COM3C1); }
   setPwmDuty(pin, duty);
   start();
 }
 
 void TimerThree::disablePwm(char pin)
 {
-  if(pin == 46) TCCR3A &= ~_BV(COM3A1);   // clear the bit that enables pwm on PL3
-  if(pin == 45) TCCR3A &= ~_BV(COM3B1);   // clear the bit that enables pwm on PL4
-  if(pin == 44) TCCR3A &= ~_BV(COM3C1);   // clear the bit that enables pwm on PL5
+  if(pin == 5) TCCR3A &= ~_BV(COM3A1);   // clear the bit that enables pwm on PL3
+  if(pin == 3) TCCR3A &= ~_BV(COM3B1);   // clear the bit that enables pwm on PL4
+  if(pin == 2) TCCR3A &= ~_BV(COM3C1);   // clear the bit that enables pwm on PL5
 }
 
 void TimerThree::attachInterrupt(void (*isr)(), long microseconds)

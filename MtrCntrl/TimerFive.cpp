@@ -23,12 +23,11 @@
  */
 
 #include "TimerFive.h"
-
-TimerFive Timer5;              // preinstatiate
+             // preinstatiate
 
 ISR(TIMER5_OVF_vect)          // interrupt service routine that wraps a user defined function supplied by attachInterrupt
 {
-  Timer5.isrCallback();
+  heartBeatTimer.isrCallback();
 }
 
 void TimerFive::initialize(long microseconds)

@@ -48,4 +48,4 @@ class TimerThree
     void (*isrCallback)();
 };
 
-extern TimerThree Timer3;
+extern TimerThree cntrlTimer;

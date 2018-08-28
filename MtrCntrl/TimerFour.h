@@ -48,4 +48,4 @@ class TimerFour
     void (*isrCallback)();
 };
 
-extern TimerFour Timer4;
+extern TimerFour teleTimer;

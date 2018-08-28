@@ -48,4 +48,4 @@ class TimerFive
     void (*isrCallback)();
 };
 
-extern TimerFive Timer5;
+extern TimerFive heartBeatTimer;
