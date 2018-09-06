@@ -27,37 +27,79 @@ void MotorControl::readSensor()
 
 void MotorControl::execCntrl()
 {
-    int potMtrCntsPrev = 0;
+    //int potMtrCntsPrev = 0;
+
+    //pwmCmd = 4095 - forceCellCnts*4;
     int tempDiff = 0;
 
-    tempDiff = potMtrCnts - potMtrCntsPrev ;
+    sampledMtrPos = potMtrCnts;
+
+   // Find out where we area
+       curSector = ceil(sampledMtrPos / sizeSector);
+       
+       if((sampledMtrPos == 0) | (sampledMtrPos == 1023)){
+          predictMode = 1;
+        }
+       
+       if (predictModePrev){
+        predictZone = deadzoneSizeCnt;
+        }
+       else{
+          predictZone = 0;
+        }
+       
+
+        if (abs(curSector - prevSector) > 1){
+          predictMode = 1;
+        }
+        else if(((curSector - prevSector) != 1) & ((curSector - prevSector) != 0))
+        {
+         predictMode = 1;
+        }
+        else if(( abs(sampledMtrPos - potMtrCntsPrev) > WRAP_THRESHOLD) & (diffCountsPrev != 0)) // % add accel limit
+        {
+         predictMode = 1;
+        }
+      
+
+        if(predictMode){
+          sampledMtrPos = (potMtrCntsPrev + diffCountsPrev) % ( 1023+deadzoneSizeCnt);
+          curSector = ceil(sampledMtrPos / sizeSector);
+          predictZone = deadzoneSizeCnt;
+        }
+
+       // % Wrap check down
+      if( (curSector == 1) && ((prevSector == 13) | (prevSector == 12 ))){
+        wrapOffset = 1023 + predictZone- potMtrCntsPrev;
+        diffCounts = (sampledMtrPos + wrapOffset);
+       // wrapCnt = wrapCnt +1;
+      }
+      //% Wrap check up  
+      else if( ((curSector == 12) | (curSector == 13 )) & ((prevSector == 0) |  (prevSector == 1))){
+        wrapOffset = 1023 + predictZone - sampledMtrPos;
+        diffCounts = -(wrapOffset + potMtrCntsPrev);
+       // wrapCnt = wrapCnt - 1;
+      }
+      else{
+           
+        tempDiff = sampledMtrPos - potMtrCntsPrev;
+        diffCounts = tempDiff;
+      }
     
-    /*  Wrap finder */
-    if (tempDiff > WRAP_THRESHOLD){
-      // forward Wrap, 800 - 100 = 700 > 200
-      wrapOffset = 1023 - potMtrCnts;
-      diffCounts = -(wrapOffset + potMtrCntsPrev);
-    }
-    else if(tempDiff < WRAP_THRESHOLD){
-      // Backwards, 60 - 900 = -840 < 200
-      wrapOffset = 1023 - potMtrCntsPrev;
-      diffCounts = wrapOffset + potMtrCnts;
-    }
-    else{
-    // no motion
-    wrapOffset = 0;
-    diffCounts = tempDiff;
-    }
-    
-    mtrVel_cntsps = ((float)diffCounts)*CNTPS2RPM;
-  potMtrCntsPrev = potMtrCnts;
+    mtrVel_rpm = ((float)diffCounts)*CNTPS2RPM;
+    potMtrCntsPrev = potMtrCnts;
+    predictModePrev = predictMode;
+    diffCountsPrev = diffCounts;
+    potMtrCntsPrev = sampledMtrPos;
+    prevSector = curSector;    
+    predictMode = 0;
 }
 
 void MotorControl::updatePWM()
 {  
   if (pwmCmd != pwmCmdPrev){
     pwmCmdPrev = pwmCmd;
-    printFlag = 1;
+    //printFlag = 1;
      if (pwmCmd == 0)    { // Turn off if 0
           _Timer3->setPwmDuty(EN_GPIO, 0);
         }

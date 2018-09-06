@@ -17,14 +17,31 @@ class MotorControl
 {
   public:
     // Pre Calcs
-    float CNTPS2RPM = (60/1023)/(ControlRate*1e-6);
+    float CNTPS2RPM = (60.0/1023.0)/(ControlRate*1.0e-6);
     
     // Thresholds
-    int WRAP_THRESHOLD = 200;
+    int WRAP_THRESHOLD = 100;
+   //
+
+
+    int curSector = 0;
+    int prevSector = 0;
+
+    int mtrDir = 0;
+    
+    int sampledMtrPos = 0;
+    int sizeSector = ceil(1023/12);
+    int predictMode = 0;
+    int predictModePrev = 0;
+    int predictZone = 0;
+    int deadzoneSizeCnt = 0;
 
     // Intermediate variables
     int wrapOffset = 0;
     int diffCounts = 0;
+    int diffCountsPrev = 0;
+    int diffCounts_orig = 0;
+    int potMtrCntsPrev = 0;
 
     // ADCs counts
     volatile int potMtrCnts      = 0;
@@ -32,7 +49,7 @@ class MotorControl
     volatile int forceCellCnts   = 0;
 
     // Calculated values
-    volatile float mtrVel_cntsps = 0;
+    volatile float mtrVel_rpm = 0;
 
     // Command Variables
     int pwmCmdPrev;

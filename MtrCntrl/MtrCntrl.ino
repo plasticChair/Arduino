@@ -31,7 +31,6 @@ void setup() {
   cntrlTimer.attachInterrupt(mtrExec, ControlRate);
   cntrlTimer.pwm(EN_GPIO, 0, ControlRate);
 
-  
   // ----- Init Motor Controller ---------//
   mtrCntrl.Init(&cntrlTimer);
   Serial.println(" Init complete! ");
@@ -42,10 +41,10 @@ void loop() {
 
   // ----- Check for new commands via serial ---------//
   if (Serial.available()) {     
-    //mtrCntrl.pwmCmdCurr = Serial.parseInt();          
-    numRxBytes = Serial.readBytesUntil('\n',serialBuffer,64);
+    mtrCntrl.pwmCmd = Serial.parseInt();          
+   // numRxBytes = Serial.readBytesUntil('\n',serialBuffer,64);
   }
-
+  //mtrCntrl.pwmCmd = 3000;
   // ----- Print data based on Timer 4 ISR ---------//
   if (printFlag == 1){
     printMe();
@@ -66,23 +65,31 @@ void mtrExec()
 void teleExec()
 {
   printFlag = 1;
-  memcpy(serialRxBuf.bytes, serialBuffer,numRxBytes);
+ // memcpy(serialRxBuf.bytes, serialBuffer,numRxBytes);
 
-  if (serialRxBuf.ID == 1){
-    mtrCntrl.pwmCmd = serialRxBuf.Data1;
-  }
+ // if (serialRxBuf.ID == 1){
+  //  mtrCntrl.pwmCmd = serialRxBuf.Data1;
+  //}
 }
 
 
 void heartBeat()
 {
-  PORTB ^= _BV(PB5);
+  //PORTB ^= _BV(PB5);
+
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
 
 void printMe()
 {
+  
     Serial.print(mtrCntrl.potMtrCnts);
-    Serial.print(mtrCntrl.mtrVel_cntsps);
+    Serial.print("    ");
+    Serial.print(mtrCntrl.forceCellCnts);
+    Serial.print("    ");
+    Serial.print(mtrCntrl.diffCounts);
+    Serial.print("    ");
+    Serial.println(mtrCntrl.mtrVel_rpm);
 
     
 //    Serial.print("");

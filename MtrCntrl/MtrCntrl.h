@@ -8,19 +8,26 @@
 #include "TimerFour.h"
 #include "TimerFive.h"
 #include "MtrCntrlClass.h"
+//#include <math.h>
 
 /* #defines */
-int ControlRate     = 1000;   // 1000 Hz, microseconds
+int ControlRate     = 1000.0;   // 1000 Hz, microseconds
 float HeartBeatRate = 1e6;  // 1 Hz, microseconds
 int TelemetryRate   = 2000; // 500 Hz, microseconds
 
 int EN_GPIO         = 5;
-int PWM2_GPIO       = 3;
-int PWM1_GPIO       = 2;
+int PWM2_GPIO       = 9;
+int PWM1_GPIO       = 8;
 int LED_GPIO        = 13;
-int forceCell_GPIO  = A3;
-int potMtr_GPIO     = A0;
-int potHan_GPIO     = A1;
+int forceCell_GPIO  = A1;
+int potMtr_GPIO     = A8;
+int potHan_GPIO     = A9;
+
+/*
+ * tq   0     
+ * cnts 1023
+ * 
+ */
 
 
 /* Function Prototypes */
