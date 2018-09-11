@@ -14,6 +14,12 @@ void MotorControl::Init(TimerThree* Timer3)
   readSensor();
   pwmCmdPrev = 0;
   pwmCmd = 0;
+
+  readSensor();
+  updateCurSector();
+  updatePrev();
+
+  
 }
 
 void MotorControl::readSensor()
@@ -21,78 +27,15 @@ void MotorControl::readSensor()
   potMtrCnts    = analogRead(potMtr_GPIO);
   potHanCnts    = analogRead(potHan_GPIO);
   forceCellCnts = analogRead(forceCell_GPIO);
+
+  sampledMtrPos = potMtrCnts;
   
 }
 
 
 void MotorControl::execCntrl()
 {
-    //int potMtrCntsPrev = 0;
-
-    //pwmCmd = 4095 - forceCellCnts*4;
-    int tempDiff = 0;
-
-    sampledMtrPos = potMtrCnts;
-
-   // Find out where we area
-       curSector = ceil(sampledMtrPos / sizeSector);
-       
-       if((sampledMtrPos == 0) | (sampledMtrPos == 1023)){
-          predictMode = 1;
-        }
-       
-       if (predictModePrev){
-        predictZone = deadzoneSizeCnt;
-        }
-       else{
-          predictZone = 0;
-        }
-       
-
-        if (abs(curSector - prevSector) > 1){
-          predictMode = 1;
-        }
-        else if(((curSector - prevSector) != 1) & ((curSector - prevSector) != 0))
-        {
-         predictMode = 1;
-        }
-        else if(( abs(sampledMtrPos - potMtrCntsPrev) > WRAP_THRESHOLD) & (diffCountsPrev != 0)) // % add accel limit
-        {
-         predictMode = 1;
-        }
-      
-
-        if(predictMode){
-          sampledMtrPos = (potMtrCntsPrev + diffCountsPrev) % ( 1023+deadzoneSizeCnt);
-          curSector = ceil(sampledMtrPos / sizeSector);
-          predictZone = deadzoneSizeCnt;
-        }
-
-       // % Wrap check down
-      if( (curSector == 1) && ((prevSector == 13) | (prevSector == 12 ))){
-        wrapOffset = 1023 + predictZone- potMtrCntsPrev;
-        diffCounts = (sampledMtrPos + wrapOffset);
-       // wrapCnt = wrapCnt +1;
-      }
-      //% Wrap check up  
-      else if( ((curSector == 12) | (curSector == 13 )) & ((prevSector == 0) |  (prevSector == 1))){
-        wrapOffset = 1023 + predictZone - sampledMtrPos;
-        diffCounts = -(wrapOffset + potMtrCntsPrev);
-       // wrapCnt = wrapCnt - 1;
-      }
-      else{
-           
-        tempDiff = sampledMtrPos - potMtrCntsPrev;
-        diffCounts = tempDiff;
-      }
     
-    mtrVel_rpm = ((float)diffCounts)*CNTPS2RPM;
-    potMtrCntsPrev = potMtrCnts;
-    predictModePrev = predictMode;
-    diffCountsPrev = diffCounts;
-    potMtrCntsPrev = sampledMtrPos;
-    prevSector = curSector;    
-    predictMode = 0;
 }
 
 void MotorControl::updatePWM()
@@ -118,3 +61,201 @@ void MotorControl::updatePWM()
         }
     }
 }
+
+void MotorControl::unwrapAlgo()
+{
+  updateCurSector();
+  updateMode();
+
+  if (TRACKING)
+    TRACKmode();
+
+  if (PREDICT)
+    PREDICTmode();
+
+  if (AQRTRACK)
+    AQRTRACKmode();
+
+  limitMtrPos();
+  updateUnwrapPos();
+  updatePrev();
+
+  
+
+}
+
+
+
+void MotorControl::updateCurSector()
+{
+  curSector = ceil(sampledMtrPos / sizeSector);
+}
+
+void MotorControl::updateMode()
+{
+  int temp;
+  
+  int tempdiffCounts = 0;
+  bool predictMode_crit_1;
+  bool predictMode_crit_2;
+  bool predictMode_crit_3;
+  bool predictMode_crit_4;
+  bool predictMode_crit_5;
+  bool predictMode_crit;
+
+  bool TRACKING_crit;
+
+
+  tempdiffCounts = diffCounts;
+
+  predictMode_crit_1 = (sampledMtrPos == 0);
+  predictMode_crit_2 = (sampledMtrPos == 1023);
+  temp = abs(curSector - prevSector);
+
+  wrapCheck();
+  
+  predictMode_crit_3 = (temp > 1) && ( wrapChecked == 3);
+  posWrapper();
+  predictMode_crit_4 = abs(diffCounts) > WRAP_THRESHOLD;
+
+  predictMode_crit_5 = (tempdiffCounts - diffCounts) > WRAP_THRESHOLD;
+  predictMode_crit = predictMode_crit_1 || predictMode_crit_2 || predictMode_crit_3 || predictMode_crit_4 || predictMode_crit_5;
+
+  TRACKING_crit = (trackingAck) > 2;
+
+  diffCounts = tempdiffCounts;
+
+  if (predictMode_crit) {
+    PREDICT = 1;
+    trackingAck = 0;
+    trackingAckPrev = 0;
+    TRACKING = 0;
+    AQRTRACK = 1;
+  }
+
+  if (TRACKING_crit) {
+    PREDICT = 0;
+    TRACKING = 1;
+    AQRTRACK = 0;
+    trackingAck = 0;
+    potMtrCntsPrev = trackingAckPrev;
+  }
+
+}
+
+void MotorControl::TRACKmode()
+{
+  posWrapper();
+
+  if (predictModePrev){
+    diffCounts = diffCountsPrev;
+  }
+
+
+  if (abs(diffCounts) > WRAP_THRESHOLD) {
+  PREDICT = 1;
+  }
+
+}
+
+void MotorControl::PREDICTmode()
+{
+  sampledMtrPos = (potMtrCntsPrev + diffCountsPrev) % 1023;
+  updateCurSector();
+  posWrapper();
+}
+
+void MotorControl::AQRTRACKmode()
+{
+  int tempVar = sampledMtrPos - trackingAckPrev;
+  if (abs(tempVar) < WRAP_THRESHOLD) {
+    trackingAck = trackingAck + 1;
+  }
+  else {
+    trackingAck = 0;
+    //lostTrackSample = sampledMtrPos;
+  }
+  
+  trackingAckPrev = sampledMtrPos;
+}
+
+void MotorControl::limitMtrPos()
+{
+  if (diffCounts > 0) {
+    diffCounts = min(diffCounts, WRAP_THRESHOLD);
+  }
+  else if(diffCounts < 0) {
+    diffCounts = max(diffCounts, -WRAP_THRESHOLD);
+  }
+  
+}
+
+void MotorControl::updateUnwrapPos()
+{
+  mtrPosCntsUnwrapped = sampledMtrPos + wrapCnt * 1023;
+}
+
+void MotorControl::updatePrev()
+{
+  predictModePrev = PREDICT;
+  diffCountsPrev = diffCounts;
+  potMtrCntsPrev = sampledMtrPos;
+  prevSector = curSector;
+}
+
+void MotorControl::wrapCheck()
+{
+  if (((curSector == 1) || (curSector == 0)) && ((prevSector == (numSectors - 1)) || (prevSector == (numSectors)))) {
+    wrapChecked = 1; // positive
+  }
+  else if (((curSector == (numSectors - 1)) || (curSector == (numSectors))) && ((prevSector == 0) || (prevSector == 1))) {
+    wrapChecked = 2; // neg
+  }
+  else {
+    if ((prevSector == 1) || (prevSector == numSectors)) {
+      wrapChecked = 3; // edge sectors
+    }
+    else {
+      wrapChecked = 0;
+    }
+  }
+}
+
+void MotorControl::posWrapper()
+{
+  int wrapOffset;
+
+  if (wrapChecked == 1) {
+    wrapOffset = 1023 - potMtrCntsPrev;
+    diffCounts = (sampledMtrPos + wrapOffset);
+    wrapCnt = wrapCnt + 1;
+    // Wrap check up
+  }
+  else if (wrapChecked == 2) {
+    wrapOffset = 1023 - sampledMtrPos;
+    diffCounts = -(wrapOffset + potMtrCntsPrev);
+    wrapCnt = wrapCnt - 1;
+  }
+  else {
+    diffCounts = sampledMtrPos - potMtrCntsPrev;
+  }
+
+
+
+}
+
+
+void MotorControl::setPos(int positionVal)
+{
+  sampledMtrPos = positionVal;
+  
+}
+
+
+int  MotorControl::getPos()
+{
+  return sampledMtrPos;
+
+}
+
+

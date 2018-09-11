@@ -4,6 +4,7 @@
 
 /* Classes */
 MotorControl mtrCntrl;
+
 TimerFive heartBeatTimer; 
 TimerFour teleTimer;
 TimerThree cntrlTimer;
@@ -57,7 +58,13 @@ void loop() {
 void mtrExec()
 {
     mtrCntrl.readSensor();
-    mtrCntrl.execCntrl();
+
+    //mtrCntrl.sampledMtrPos = 100;
+  //mtrPos.setPos();
+    mtrCntrl.unwrapAlgo();
+    //mtrCntrl.diffCounts = mtrCntrl.diffCounts;
+    mtrCntrl.mtrVel_rpm = ((float)mtrCntrl.diffCounts)*mtrCntrl.CNTPS2RPM;
+  //  mtrCntrl.execCntrl();
     mtrCntrl.updatePWM();
 }
 
@@ -85,11 +92,25 @@ void printMe()
   
     Serial.print(mtrCntrl.potMtrCnts);
     Serial.print("    ");
-    Serial.print(mtrCntrl.forceCellCnts);
+    Serial.print(mtrCntrl.sampledMtrPos);
     Serial.print("    ");
-    Serial.print(mtrCntrl.diffCounts);
-    Serial.print("    ");
-    Serial.println(mtrCntrl.mtrVel_rpm);
+    Serial.print(mtrCntrl.predictMode_crit_1);
+     Serial.print("    ");
+         Serial.print(mtrCntrl.predictMode_crit_2);
+     Serial.print("    ");
+         Serial.print(mtrCntrl.predictMode_crit_3);
+     Serial.print("    ");
+         Serial.print(mtrCntrl.predictMode_crit_4);
+     Serial.print("    ");
+         Serial.print(mtrCntrl.predictMode_crit_5);
+     Serial.print("    ");
+       Serial.print(mtrCntrl.PREDICT);
+     Serial.print("    ");
+      Serial.print(mtrCntrl.TRACKING);
+     Serial.print("    ");
+      Serial.print(mtrCntrl.AQRTRACK);
+     Serial.print("    ");
+    Serial.println(mtrCntrl.diffCounts);
 
     
 //    Serial.print("");
