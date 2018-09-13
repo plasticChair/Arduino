@@ -8,13 +8,13 @@
 #include "TimerFour.h"
 #include "TimerFive.h"
 #include "MtrCntrlClass.h"
-#include "mtrPosClass.h"
+#include "mtrPosUnwrap.h"
 #include <math.h>
 
 /* #defines */
 int ControlRate     = 1000.0;   // 1000 Hz, microseconds
 float HeartBeatRate = 1e6;  // 1 Hz, microseconds
-int TelemetryRate   = 5000; // 500 Hz, microseconds
+int TelemetryRate   = 20000; // 500 Hz, microseconds
 
 int EN_GPIO         = 5;
 int PWM2_GPIO       = 9;

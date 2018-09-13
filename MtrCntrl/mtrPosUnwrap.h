@@ -8,8 +8,12 @@ public:
 	~mtrPosUnwrap();
 
 	// User defined
+  int filterSet = 1;
+  
 	int numSectors = 15;
-	int WRAP_THRESHOLD = 20;
+  
+	int WRAP_THRESHOLD = 15;
+  int MAX_ACCEL_CNTS = 5;
 	int sizeSector     = ceil(1023 / numSectors);  // In counts
 	
 	// No touch
@@ -20,6 +24,7 @@ public:
 	void unwrapAlgo(int countsIn);
 	void setPosCnts(int positionVal);
 	int  getDiffCounts();
+ int  getPosCounts();
 
 
 	
@@ -50,6 +55,11 @@ public:
 	int TRACKING = 0;
 	int AQRTRACK = 1;
 	int PREDICT  = 0;
+
+  void setFilter(int filterSelect);
+  void setThreshold(int thresSelect);
+
+  
 private:
 	// Algo specifics
 	void updateCurSector();
@@ -62,6 +72,7 @@ private:
 	void updatePrev();
 	void wrapCheck();
 	void posWrapper();
+ 
 
 };
 

@@ -1,5 +1,5 @@
 #include "mtrPosUnwrap.h"
-#include "math.h"
+#include "Arduino.h"
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
@@ -25,25 +25,40 @@ void mtrPosUnwrap::init(int countsIn)
 
 void mtrPosUnwrap::unwrapAlgo(int countsIn)
 {
+
+  
 	// Update reading and values
 	setPosCnts(countsIn);
-	updateCurSector();
-	updateMode();
 
-	// Run modes
-	if (TRACKING)
-		TRACKmode();
-
-	if (AQRTRACK)
-		AQRTRACKmode();
-
-	if (PREDICT)
-		PREDICTmode();
-
-	// Condition outputs
-	limitMtrPos();
-	updateUnwrapPos();
-	updatePrev();
+  if (filterSet){
+    updateCurSector();
+    updateMode();
+    
+    // Run modes
+    if (TRACKING)
+    	TRACKmode();
+    
+    if (AQRTRACK)
+    	AQRTRACKmode();
+    
+    if (PREDICT)
+    	PREDICTmode();
+    
+    // Condition outputs
+    limitMtrPos();
+    updateUnwrapPos();
+    updatePrev();
+  }
+  else{
+    wrapCheck();
+    posWrapper();
+    // Condition outputs
+    limitMtrPos();
+    updateUnwrapPos();
+    updatePrev();
+    
+  }
+    
 
 }
 
@@ -117,7 +132,7 @@ void mtrPosUnwrap::updateMode()
 
 void mtrPosUnwrap::TRACKmode()
 {
-	// Standard unwrap routine
+	// Standard unwrap routine, already done in modeCheck
 	//posWrapper();
 
 	// Need for smooth transition
@@ -143,16 +158,15 @@ void mtrPosUnwrap::PREDICTmode()
 void mtrPosUnwrap::AQRTRACKmode()
 {
 	// Check if current and last known measurement is within threshold
-	if (abs(augMtrPos - trackingAckPrev) < WRAP_THRESHOLD) {
+	if ((abs(sampledMtrPos - trackingAckPrev) < WRAP_THRESHOLD) && (sampledMtrPos != 0) && (sampledMtrPos != 1023)) {
 		trackingAck = trackingAck + 1;
 	}
 	// start over if not
 	else {
 		trackingAck = 0;
-		//lostTrackSample = sampledMtrPos;
 	}
 
-	trackingAckPrev = augMtrPos;
+	trackingAckPrev = sampledMtrPos; //augMtrPos;
 }
 
 void mtrPosUnwrap::limitMtrPos()
@@ -238,3 +252,27 @@ int  mtrPosUnwrap::getDiffCounts()
 	return diffCounts;
 
 }
+
+void mtrPosUnwrap::setFilter(int filterSelect)
+{
+
+  filterSet = filterSelect;
+
+}
+
+void mtrPosUnwrap::setThreshold(int thresSelect)
+{
+
+  WRAP_THRESHOLD = thresSelect;
+
+}
+
+int mtrPosUnwrap::getPosCounts()
+{
+  return augMtrPos;
+}
+
+
+
+
+

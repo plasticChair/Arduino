@@ -1,9 +1,14 @@
 #include "MtrCntrl.h"
 
 
+unsigned long timeNow;
+unsigned long timePrev;
+unsigned long diffTime;
+unsigned long timeLater;
 
 /* Classes */
 MotorControl mtrCntrl;
+mtrPosUnwrap snsfFilter;
 
 TimerFive heartBeatTimer; 
 TimerFour teleTimer;
@@ -34,6 +39,10 @@ void setup() {
 
   // ----- Init Motor Controller ---------//
   mtrCntrl.Init(&cntrlTimer);
+  snsfFilter.setFilter(1);
+  snsfFilter.setThreshold(20);
+  snsfFilter.init(mtrCntrl.getPosCnts());
+  
   Serial.println(" Init complete! ");
    
 }
@@ -42,13 +51,21 @@ void loop() {
 
   // ----- Check for new commands via serial ---------//
   if (Serial.available()) {     
-    mtrCntrl.pwmCmd = Serial.parseInt();          
+    mtrCntrl.cmdCnts = Serial.parseInt();    
+        
    // numRxBytes = Serial.readBytesUntil('\n',serialBuffer,64);
   }
+
+  
+  
+  
   //mtrCntrl.pwmCmd = 3000;
   // ----- Print data based on Timer 4 ISR ---------//
   if (printFlag == 1){
     printMe();
+   // Serial.println(diffTime);
+    //Serial.println(timeNow - timeLater);
+    
     printFlag = 0;
   }
 }
@@ -57,15 +74,25 @@ void loop() {
 
 void mtrExec()
 {
+
+  timeNow = micros();
     mtrCntrl.readSensor();
 
-    //mtrCntrl.sampledMtrPos = 100;
-  //mtrPos.setPos();
-    mtrCntrl.unwrapAlgo();
-    //mtrCntrl.diffCounts = mtrCntrl.diffCounts;
-    mtrCntrl.mtrVel_rpm = ((float)mtrCntrl.diffCounts)*mtrCntrl.CNTPS2RPM;
-  //  mtrCntrl.execCntrl();
+    snsfFilter.unwrapAlgo(mtrCntrl.getPosCnts());
+    mtrCntrl.setPosCnts(snsfFilter.getPosCounts());
+
+    mtrCntrl.mtrVel_rpm = ((float)snsfFilter.diffCounts)*mtrCntrl.CNTPS2RPM;
+    mtrCntrl.execCntrl();
     mtrCntrl.updatePWM();
+
+   timeLater = micros();
+   
+   //diffTime = timeNow - timePrev;
+   diffTime = timeLater  - timeNow;
+   timePrev = timeNow;
+
+
+    
 }
 
 
@@ -90,27 +117,30 @@ void heartBeat()
 void printMe()
 {
   
-    Serial.print(mtrCntrl.potMtrCnts);
-    Serial.print("    ");
-    Serial.print(mtrCntrl.sampledMtrPos);
-    Serial.print("    ");
-    Serial.print(mtrCntrl.predictMode_crit_1);
-     Serial.print("    ");
-         Serial.print(mtrCntrl.predictMode_crit_2);
-     Serial.print("    ");
-         Serial.print(mtrCntrl.predictMode_crit_3);
-     Serial.print("    ");
-         Serial.print(mtrCntrl.predictMode_crit_4);
-     Serial.print("    ");
-         Serial.print(mtrCntrl.predictMode_crit_5);
-     Serial.print("    ");
-       Serial.print(mtrCntrl.PREDICT);
-     Serial.print("    ");
-      Serial.print(mtrCntrl.TRACKING);
-     Serial.print("    ");
-      Serial.print(mtrCntrl.AQRTRACK);
-     Serial.print("    ");
-    Serial.println(mtrCntrl.diffCounts);
+//    Serial.print(snsfFilter.augMtrPos);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.sampledMtrPos);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.predictMode_crit_1);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.predictMode_crit_2);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.predictMode_crit_3);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.predictMode_crit_4);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.predictMode_crit_5);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.PREDICT);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.TRACKING);
+//    Serial.print("    ");
+//    Serial.print(snsfFilter.AQRTRACK);
+//    Serial.print("    ");
+
+
+    
+    Serial.println(mtrCntrl.sampledMtrPos);
 
     
 //    Serial.print("");

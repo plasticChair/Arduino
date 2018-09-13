@@ -19,56 +19,9 @@ class MotorControl
     // Pre Calcs
     float CNTPS2RPM = (60.0/1023.0)/(ControlRate*1.0e-6);
 
-      int tempdiffCounts = 0;
-  bool predictMode_crit_1;
-  bool predictMode_crit_2;
-  bool predictMode_crit_3;
-  bool predictMode_crit_4;
-  bool predictMode_crit_5;
-  bool predictMode_crit;
+    int sampledMtrPos;
 
-  int curSector = 0;
-  int prevSector = 0;
-  int sizeSector  = ceil(1023/15);
-  int numSectors = 15;
-
-  int sampledMtrPos = 0;
-
-  int potMtrCntsPrev = 0;
-
-  int diffCounts     = 0;
-  int diffCountsPrev = 0;
-  int wrapCnt        = 0;
-  int wrapChecked    = 0;
-
-  int WRAP_THRESHOLD        = 20;
-  float mtrPosCntsUnwrapped = 0.0;
-
-  int TRACKING = 0;
-  int AQRTRACK = 1;
-  int PREDICT  = 0;
-  int predictModePrev = 0;
-
-  int trackingAck = 0;
-  int trackingAckPrev = 0;
-
-  void unwrapAlgo();
-  void updateCurSector();
-  void updateMode();
-  void TRACKmode();
-  void PREDICTmode();
-  void AQRTRACKmode();
-  void limitMtrPos();
-  void updateUnwrapPos();
-  void updatePrev();
-
-  void setPos(int positionVal);
-  int  getPos();
-
-  void wrapCheck();
-  void posWrapper();
-
- 
+    int cmdCnts = 0;
   
     // ADCs counts
     volatile int potMtrCnts      = 0;
@@ -91,6 +44,8 @@ class MotorControl
     void readSensor();
     void execCntrl();
     void updatePWM();
+	  int  getPosCnts();
+    void setPosCnts(int cntsIn);
 };
 
 /* ---------------------------------*/
