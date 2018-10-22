@@ -1,4 +1,4 @@
-#include <LaCrosse_TX23.h>
+#include "LaCrosse_TX23.h"
 
 //DATA wire connected to arduino port 10
 LaCrosse_TX23 anemometer = LaCrosse_TX23(10);
@@ -16,7 +16,7 @@ void loop()
   
 	if(anemometer.read(speed, direction))
   {
-    Serial.println("Speed = " + String(speed,1) + " m/s");
+    Serial.println("Speed = " + String(speed*2.23694,2) + " mph");
     Serial.println("Dir = " + dirTable[direction]);    
   }
   else

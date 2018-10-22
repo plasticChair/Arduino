@@ -22,7 +22,7 @@
   BSD license, all text above must be included in any redistribution
 *************************************************************************************************/
 
-#include <LaCrosse_TX23.h>
+#include "LaCrosse_TX23.h"
 
 LaCrosse_TX23::LaCrosse_TX23(int pin)
 {
