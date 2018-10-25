@@ -101,6 +101,20 @@ char messageFromPC[numChars] = {0};
 
 boolean newData = false;
 
+struct PS_val{
+    char V[6];
+    char A[6];
+    char W[6];
+};
+
+struct powerForms{
+  PS_val v3V3;
+  PS_val v5V;
+  PS_val v12V;
+};
+
+
+/*
 char v3V3_V[6];
 char v3V3_A[6];
 char v3V3_W[6];
@@ -112,7 +126,7 @@ char v12V_A[6];
 char v12V_W[6];
 
 char v12V_A_extra[6];
-
+*/
 
 void setup(void)
 {
@@ -120,7 +134,7 @@ void setup(void)
      //mySerial.begin(9600);
     tft.reset();
     uint16_t ID = tft.readID();
-    Serial.println("Starting....");
+    
     tft.begin(ID);
     tft.setRotation(1);            //LANDSCAPE
     tft.fillScreen(BLACK);
@@ -224,6 +238,7 @@ xy12V.buttonDIS_Y = 275;
 //  updateOutVals(0,0,2, WHITE);
 
    tft.setTextColor(WHITE, BLACK);
+   Serial.println("Starting....");
 }
 
 
@@ -233,39 +248,40 @@ xy12V.buttonDIS_Y = 275;
 void loop(void)
 {
 
+struct powerForms serialData;
+
 recvWithStartEndMarkers();
   if (newData == true) {
         strcpy(tempChars, receivedChars);
             // this temporary copy is necessary to protect the original data
             //   because strtok() used in parseData() replaces the commas with \0
-        parseData();
+        parseData(&serialData);
 
-        Serial.println(newData);
+        //Serial.println(newData);
         
 
-    updateOutVals(0, WHITE);
-    updateOutVals(1, WHITE);
-    updateOutVals(2, WHITE);
+    updateOutVals(0, WHITE,&serialData);
+    updateOutVals(1, WHITE,&serialData);
+    updateOutVals(2, WHITE,&serialData);
 
-   
-/*
-    Serial.print(v3V3_V);
-    Serial.print(", ");
-    Serial.print(v3V3_A);
-    Serial.print(", ");
-    Serial.println(v3V3_W);
-    
-    Serial.print(v5V_V);
-    Serial.print(", ");
-    Serial.print(v5V_A);
-    Serial.print(", ");
-    Serial.println(v5V_W);
-    
-    Serial.print(v12V_V);
+  /* 
+    Serial.print(serialData.v3V3.V);
     Serial.print("- ");
-    Serial.print(v12V_A2);
+    Serial.print(serialData.v3V3.A);
     Serial.print("- ");
-    Serial.println(v12V_W);
+    Serial.println(serialData.v3V3.W);
+    
+    Serial.print(serialData.v5V.V);
+    Serial.print("- ");
+    Serial.print(serialData.v5V.A);
+    Serial.print("- ");
+    Serial.println(serialData.v5V.W);
+    
+    Serial.print(serialData.v12V.V);
+    Serial.print("- ");
+    Serial.print(serialData.v12V.A);
+    Serial.print("- ");
+    Serial.println(serialData.v12V.W);
 */
      //delay(5000);
    
@@ -377,7 +393,7 @@ void showmsgXY(int x, int y, int sz, const char *msg, int color)
     delay(1000);
 }
 
-void updateOutVals(int channel, int color)
+void updateOutVals(int channel, int color,struct powerForms *serialData)
 {
    char convert[12];
  tft.setTextColor(color, BLACK);
@@ -385,43 +401,38 @@ void updateOutVals(int channel, int color)
   if(channel == 0)
   {
     tft.setCursor(xy3V3.vX, xy3V3.vY);
-    tft.print(v3V3_V);
+    tft.print(serialData->v3V3.V);
     tft.setCursor(xy3V3.aX, xy3V3.aY);
-    tft.print(v3V3_A);    
+    tft.print(serialData->v3V3.A);    
 
     tft.setTextColor(YELLOW, BLACK);
     tft.setTextSize(2);
     tft.setCursor(xy3V3.pX, xy3V3.pY);
-    tft.print(v3V3_W);
+    tft.print(serialData->v3V3.W);
    }
    else if (channel == 1)
    {
     tft.setCursor(xy5V.vX, xy5V.vY);
-    tft.print(v5V_V);
+    tft.print(serialData->v5V.V);
     tft.setCursor(xy5V.aX, xy5V.aY);
-    tft.print(v5V_A);   
+    tft.print(serialData->v5V.A);   
     tft.setTextSize(2);
     tft.setTextColor(YELLOW, BLACK);
     tft.setCursor(xy5V.pX, xy5V.pY);
-    tft.print(v5V_W);
+    tft.print(serialData->v5V.W);
    }
     else if (channel == 2)
    {
-
-    Serial.println(v12V_V);
-    Serial.println(v12V_A_extra);
-
-    
     tft.setCursor(xy12V.vX, xy12V.vY);
-    tft.print(v12V_V);
+    tft.print(serialData->v12V.V);
     tft.setCursor(xy12V.aX, xy12V.aY);
-    tft.print(v12V_A);
-    tft.setCursor(xy12V.aX, xy12V.aY);
-    tft.print(v12V_A_extra);   
+    tft.print(serialData->v12V.A);
+  //  tft.setCursor(xy12V.aX, xy12V.aY);
+  //  tft.print(v12V_A_extra);   
     tft.setTextSize(2);
     tft.setTextColor(YELLOW, BLACK);
     tft.setCursor(xy12V.pX, xy12V.pY);
-    tft.print(v12V_W);
+    tft.print(serialData->v12V.W);
    }
 }
 
@@ -440,7 +451,7 @@ void recvWithStartEndMarkers() {
  */
     while (Serial.available() > 0 && newData == false) {
         rc = Serial.read();
-        Serial.print(rc);
+        //Serial.print(rc);
         
         timeLastChar = millis();
 
@@ -468,11 +479,11 @@ void recvWithStartEndMarkers() {
 
 
 
-void parseData() {      // split the data into its parts
+void parseData(struct powerForms *serialData) {      // split the data into its parts
 
     char * strtokIndx; // this is used by strtok() as an index
-    Serial.println(" ");
-    Serial.println(tempChars);
+  //  Serial.println(" ");
+   // Serial.println(tempChars);
     char * pch;
     int ii = 0;
     int delim_loc[9];
@@ -481,37 +492,32 @@ void parseData() {      // split the data into its parts
 
 
     strtokIndx = strtok(tempChars,",");      // get the first part - the string
-    strcpy(v3V3_V, strtokIndx);     // convert this part to an integer
+    strcpy(serialData->v3V3.V, strtokIndx);     // convert this part to an integer
   
     strtokIndx = strtok(NULL, ",");
-    strcpy(v3V3_A, strtokIndx);
+    strcpy(serialData->v3V3.A, strtokIndx);
   
-      strtokIndx = strtok(NULL, ",");
-      strcpy(v3V3_W, strtokIndx);
+    strtokIndx = strtok(NULL, ",");
+    strcpy(serialData->v3V3.W, strtokIndx);
 
     strtokIndx = strtok(NULL, ",");
-    strcpy(v5V_V, strtokIndx);
+    strcpy(serialData->v5V.V, strtokIndx);
     
     strtokIndx = strtok(NULL, ",");
-    strcpy(v5V_A, strtokIndx);
+    strcpy(serialData->v5V.A, strtokIndx);
 
     strtokIndx = strtok(NULL, ",");
-    strcpy(v5V_W, strtokIndx);
+    strcpy(serialData->v5V.W, strtokIndx);
 
     strtokIndx = strtok(NULL, ",");
-    strcpy(v12V_V, strtokIndx);
-    Serial.println(strtokIndx);
+    strcpy(serialData->v12V.V, strtokIndx);
+    //Serial.println(strtokIndx);
     
     strtokIndx = strtok(NULL, ",");
-    strcpy(v12V_A, strtokIndx);   
-    strcpy(v12V_A_extra, strtokIndx);
+    strcpy(serialData->v12V.A, strtokIndx);   
 
-    Serial.println("-----------");
-    Serial.println(strtokIndx);
-
-    
     strtokIndx = strtok(NULL, ",");
-    strcpy(v12V_W, strtokIndx);
+    strcpy(serialData->v12V.W, strtokIndx);
 
 
 
