@@ -50,6 +50,8 @@ const byte reg_size = sizeof(weatherData);
 
 void requestEvent()
 {  
+  
+    
     TinyWireS.send(weatherData.byteData[0]);
     TinyWireS.send(weatherData.byteData[1]);
     TinyWireS.send(weatherData.byteData[2]);
@@ -113,7 +115,6 @@ LaCrosse_TX23 anemometer = LaCrosse_TX23(3);
 // the setup routine runs once when you press reset:
 void setup() {                
   // initialize the digital pin as an output.
- 
   //attachInterrupt(1,pulseISR,RISING);
   
   TinyWireS.begin(I2C_SLAVE_ADDRESS);
@@ -131,9 +132,9 @@ void loop() {
     //TinyWireS_stop_check();
     tws_delay(2500);      
     anemometer.read(speedData, windData, rawData, error);
-    weatherData.weather.dir = windData;
-    weatherData.weather.error = error;
-    weatherData.weather.speed = speedData;
+    weatherData.weather.dir = 6;//windData;
+    weatherData.weather.error = 8;//error;
+    weatherData.weather.speed = 2.3;//speedData;
 }
 /*
 void onI2CRequest() {
