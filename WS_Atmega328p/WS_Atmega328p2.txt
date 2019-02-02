@@ -1,0 +1,339 @@
+// Visual Micro is in vMicro>General>Tutorial Mode
+// 
+/*
+Name:       WS_Attiny.ino
+Created:	1/27/2019 8:13:08 PM
+Author:     Scott
+*/
+
+
+#include "WS_Atmega328p.h"
+
+
+
+
+
+
+
+// Prototypes
+void init_I2CM();
+void init_I2CS();
+void init_GPIO();
+void init_vars();
+void EnableSleep();
+void avgGustData();
+void PulseISRRoutine();
+void RTCISRRoutine();
+void printDateTime(time_t t);
+void RTC_init();
+
+void RTC_SetAlarm_Interval(int);
+
+
+// Initilizations
+Adafruit_FRAM_I2C fram = Adafruit_FRAM_I2C();
+LaCrosse_TX23 anemometer = LaCrosse_TX23(ANE_TX);
+volatile CntrlStruct MstrCntrl;
+volatile MstrDataStruct MstrData;
+storeDataUnion *storeData;
+MAX17048 pwr_mgmt;
+
+MstrGSMStruct GSMStruct;
+
+
+// The setup() function runs once each time the micro-controller starts
+void setup()
+{
+	Serial.begin(115200);
+	init_GPIO();
+
+	RTC_SetAlarm_Interval(1);
+
+
+
+	pwr_mgmt.attatch(Wire);
+	pwr_mgmt.quickStart();
+	pwr_mgmt.enSleep(true);
+
+	fram.begin();
+	// Read the first byte
+	int test = fram.read8(0x0);
+		// Test write ++
+	fram.write8(0x0, test + 1);
+	
+
+	init_vars();
+
+	// Disable ADC
+	adc_disable();
+	PRR |= _BV(PRADC);
+
+	// turn off brown-out enable in software
+	MCUCR = bit(BODS) | bit(BODSE);  // turn on brown-out enable select
+	MCUCR = bit(BODS);        // this must be done within 4 clock cycles of above
+
+	power_adc_disable(); // ADC converter
+	power_spi_disable(); // SPI
+	//power_timer0_disable();// Timer 0
+	//power_timer1_disable();// Timer 1
+//	power_timer2_disable();// Timer 2
+	power_usart0_disable();
+	power_twi_disable();
+	wdt_disable();  // disable watchdog
+
+							  // Set Sleep mode
+	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+
+
+}
+
+
+
+
+
+// Add the main program code into the continuous loop() function
+void loop()
+{
+
+	//EIFR = bit(INTF0);  // clear flag for interrupt 0
+
+	/* ------------  Store Data ------------*/
+	if (MstrCntrl.serviceRTCISR) {
+		// Reset RTC Alarm
+
+		RTC_SetAlarm_Interval(1);
+
+		//Check if 15 mins elapsed
+		if ((MstrCntrl.t.minutes - MstrCntrl.prevt.minutes) >= 15) {
+			MstrCntrl.prevt = MstrCntrl.t;
+			MstrCntrl.Server_Int = 1;
+		}
+
+		
+		//Interval Elapsed, collect data
+		MstrCntrl.ANE_enable = 1;
+		digitalWrite(ANE_En, MstrCntrl.ANE_enable);
+		RTC_SetAlarm_Interval(2);
+				
+
+		//disable INT PulseISR
+		ANE_ISR_Dis();  //UPDATE
+		MstrCntrl.pulseSkip = 1;
+
+		//Go to Sleep
+		//sleepy();
+
+
+		//wake up 
+		RTC.alarmInterrupt(ALARM_2, false);
+
+		// Read wind data
+		anemometer.read(MstrData.weather.speed, MstrData.weather.dir);
+		
+		//error detect
+		MstrCntrl.ANE_enable = 0;
+		digitalWrite(ANE_En, MstrCntrl.ANE_enable);
+
+		//Get BME280 data
+		//
+		//
+		//
+
+
+		//Check battery level
+
+		//Enable / disable charging
+
+
+		storeData->weather = (MstrData.weather);
+		//Write to FRAM
+		MstrCntrl.FRAM_Idx = fram.read8(FRAM_MEM_COUNTER);
+		for (int ii = 0; ii < wxPackageSize; ii++) {
+			MstrCntrl.FRAM_Idx++;
+			fram.write8(MstrCntrl.FRAM_Idx, storeData->i2c_tx[ii]);
+			
+		}
+		fram.write8(fram.read8(FRAM_NUM_P0INTS) , MstrCntrl.FRAM_NumPoints++);
+		//		
+
+		MstrCntrl.serviceRTCISR = 0;
+	}
+
+
+	//  Server Send
+	if ( MstrCntrl.Server_Int)
+	{
+		//Read RAM one line at time
+		MstrCntrl.FRAM_NumPoints = fram.read8(FRAM_NUM_P0INTS);
+		for (int ii = 0; ii < MstrCntrl.FRAM_NumPoints; ii++) {
+			for (int kk = 0; kk < wxPackageSize; kk++) {
+				GSMStruct.TxData[kk] = fram.read8(kk + FRAM_DATA_OFFSET + ii*FRAM_DATA_OFFSET);
+				//Delete FRAM data
+				fram.write8(kk + FRAM_DATA_OFFSET + ii*FRAM_DATA_OFFSET, 0);
+
+			}
+
+			//Send data to GSM Module
+		}
+		MstrCntrl.FRAM_NumPoints = 0;
+		MstrCntrl.FRAM_Idx = 0;
+		
+
+		MstrCntrl.Server_Int = 0;
+	}
+
+
+
+	/* ------------  Pulse Detect ------------*/
+	if (MstrCntrl.servicePulseISR) {
+
+		avgGustData();
+		MstrCntrl.servicePulseISR = 0;
+	}
+
+		
+
+
+}
+
+/*------------------------------------------*/
+/*--------------- ISR Routine --------------*/
+/*------------------------------------------*/
+
+void PulseISRRoutine() {
+
+	//PCMSK &= ~_BV(PCINT1);
+
+	if (MstrCntrl.pulseSkip) {
+		strData.pulseCt = micros();
+		MstrCntrl.pulseSkip = 0;
+
+	}
+	else {
+		// This is called when the interrupt occurs, but I don't need to do anything in it
+		MstrData.pulseCt = micros();
+		MstrData.pulseDt = MstrData.pulseCt - MstrData.pulsePt;
+		MstrData.pulsePt = MstrData.pulseCt;
+
+		if (MstrData.pulseDt > 24000) {
+
+			MstrData.gustBuff[MstrCntrl.PulseBuffIdx] = (MstrData.pulseDt >> 8);
+			MstrCntrl.PulseBuffIdx++;
+			if (MstrCntrl.PulseBuffIdx >= PulseBuffSize) {
+				MstrCntrl.PulseBuffIdx = 0;
+			}
+
+			MstrCntrl.servicePulseISR = 1;
+		}
+	}
+	//PCMSK |= _BV(PCINT1);
+}
+
+
+
+void RTCISRRoutine() {
+	MstrCntrl.serviceRTCISR = 1;	
+	MstrCntrl.RTC_count++;
+}
+
+
+/*------------------------------------------*/
+/*------------- Init Functions -------------*/
+/*------------------------------------------*/
+
+
+void init_GPIO()
+{
+	pinMode(ANE_TX, OUTPUT);
+	pinMode(ANE_Pulse, OUTPUT);
+	pinMode(ANE_En, OUTPUT);
+	digitalWrite(ANE_En, LOW);
+
+	attachInterrupt(digitalPinToInterrupt(ANE_Pulse), Pulse_ISR, FALLING);
+	attachInterrupt(digitalPinToInterrupt(RTC_Alarm), Pulse_ISR, FALLING);
+}
+
+void init_vars()
+{
+	MstrData.gustAvg = 0;
+	MstrData.weather.gustMax = 0;
+	MstrData.weather.dir = 0;
+	MstrData.weather.speed = 0.0;
+
+	MstrCntrl.I2C_Rx = 0;
+	MstrCntrl.I2C_Req = 0;
+	MstrCntrl.gustAvgCnt = 0;
+	MstrCntrl.dataStoreCnt = 0;
+	MstrCntrl.servicePulseISR = 0;
+	MstrCntrl.serviceRTCISR = 0;
+	MstrCntrl.I2C_WriteProtect = 0;
+	MstrCntrl.ANECnt = 0;
+	MstrCntrl.RTC_count = 0;
+
+	MstrCntrl.FRAM_NumPoints = 0;
+	MstrCntrl.FRAM_Idx = 0;
+
+	MstrCntrl.Meas_Int = MEAS_INTERVAL;
+	MstrCntrl.Server_Int = ServerTx_INTERVAL;
+	MstrCntrl.Ane_Int = ANE_INTERVAL;
+
+	//Set time if needed
+	MstrCntrl.t = RTC.get();
+	MstrCntrl.prevt = RTC.get();
+}
+
+void EnableSleep()
+{
+	sleep_enable();
+	interrupts();             // guarantees next instruction executed
+	sleep_cpu();              // sleep within 3 clock cycles of above
+}
+
+void avgGustData()
+{
+	unsigned long temp = 0;
+	for (int ii = 0; ii < PulseBuffSize; ii++) {
+		temp = temp + MstrData.gustBuff[ii];
+	}
+	MstrData.gustAvg = temp >> 3;  //Divide by 8
+}
+
+void findRunningPeaks()
+{
+	if (MstrData.gustAvg < MstrData.weather.gustMax) {
+		MstrData.weather.gustMax = MstrData.gustAvg;
+	}
+}
+
+void RTC_SetAlarm_Interval(byte select)
+{
+	MstrCntrl.t = RTC.get();
+	if (select == 1) {
+		RTC.setAlarm(ALM1_EVERY_SECOND, 0, 0, MstrCntrl.t.second + MstrCntrl.Meas_Int, 1);    //daydate parameter should be between 1 and 7
+		RTC.alarm(ALARM_1);                   //ensure RTC interrupt flag is cleared
+		RTC.alarmInterrupt(ALARM_1, true);
+	}
+	else {
+		RTC.setAlarm(ALM2_EVERY_SECOND, 0, 0, MstrCntrl.t.seconds + MstrCntrl.Ane_Int, 1);    //daydate parameter should be between 1 and 7
+		RTC.alarm(ALARM_2);                   //ensure RTC interrupt flag is cleared
+		RTC.alarmInterrupt(ALARM_2, true);
+	}
+}
+
+
+/*----------------------------------*/
+/*------------- I2C RX -------------*/
+/*----------------------------------*/
+/*void requestEvent()
+{
+
+TinyWireS.send(storeData.i2c_tx[0]);
+TinyWireS.send(storeData.i2c_tx[1]);
+TinyWireS.send(storeData.i2c_tx[2]);
+TinyWireS.send(storeData.i2c_tx[3]);
+TinyWireS.send(storeData.i2c_tx[4]);
+TinyWireS.send(storeData.i2c_tx[0]);
+TinyWireS.send(0xEE);
+
+}
+*/
