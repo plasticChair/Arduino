@@ -127,3 +127,51 @@ void sleep()
 	interrupts();             // guarantees next instruction executed
 	sleep_cpu();
 }
+
+void disable_timer2() 
+{
+	noInterrupts();
+	TCCR2B = 0x00;
+	interrupts();
+}
+
+void enable_timer2()
+{
+	noInterrupts();
+	TCCR2B = 0x04;
+	interrupts();
+}
+
+void GPIO_dance()
+{
+
+	digitalWrite(IOCntrl.LED1, HIGH);
+	digitalWrite(IOCntrl.LED2, LOW);
+	delay(100);
+	digitalWrite(IOCntrl.LED1, LOW);
+	digitalWrite(IOCntrl.LED2, HIGH);
+	delay(100);
+	digitalWrite(IOCntrl.LED1, HIGH);
+	digitalWrite(IOCntrl.LED2, LOW);
+	delay(100);
+	digitalWrite(IOCntrl.LED1, LOW);
+	digitalWrite(IOCntrl.LED2, HIGH);
+	delay(100);
+	digitalWrite(IOCntrl.LED1, HIGH);
+	digitalWrite(IOCntrl.LED2, LOW);
+	delay(100);
+	digitalWrite(IOCntrl.LED1, LOW);
+	digitalWrite(IOCntrl.LED2, HIGH);
+	delay(100);
+	digitalWrite(IOCntrl.LED1, HIGH);
+	digitalWrite(IOCntrl.LED2, LOW);
+	delay(100);
+	digitalWrite(IOCntrl.LED1, LOW);
+	digitalWrite(IOCntrl.LED2, HIGH);
+	delay(100);
+	digitalWrite(IOCntrl.LED1, LOW);
+	digitalWrite(IOCntrl.LED2, LOW);
+
+
+}
+

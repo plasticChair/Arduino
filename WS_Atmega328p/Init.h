@@ -36,14 +36,14 @@ extern volatile PulseStruct MstrISR;
 #define mDONE 16
 #define mBATT_ALRT 4
 
-#define MEAS_INTERVAL 0.2 //minutes
+#define MEAS_INTERVAL 0.1 //minutes
 #define ServerTx_INTERVAL 15 //Minutes
 #define ANE_INTERVAL 2 // Seconds
 #define MEAS_INT_MAX 5
 #define SERVER_INT_MAX 30
 
 #define txWindSF 8.9737
-#define txGustSF 0.144
+#define txGustSF 1
 #define txTempSF 10.7684
 #define txPressSF 5.115
 #define txHumidSF 10.23
@@ -64,16 +64,19 @@ void init_GPIO()
 	pinMode(IOCntrl.LED1, OUTPUT);
 	pinMode(IOCntrl.LED2, OUTPUT);
 	pinMode(IOCntrl.ANE_En, OUTPUT);
+	pinMode(IOCntrl.DONE, OUTPUT);
+	pinMode(IOCntrl.Charge_EN, OUTPUT);
 
-
+	pinMode(IOCntrl.WAKE, INPUT);
 	pinMode(IOCntrl.BATT_ALRT, INPUT);
 	pinMode(IOCntrl.ANE_TX, INPUT);
 	pinMode(IOCntrl.ANE_Pulse, INPUT);
-	pinMode(IOCntrl.RTC_Alarm, INPUT);
+	pinMode(IOCntrl.RTC_Alarm, INPUT_PULLUP);
 
 	digitalWrite(IOCntrl.ANE_En, HIGH);
 	digitalWrite(IOCntrl.LED1, HIGH);
 	digitalWrite(IOCntrl.LED2, HIGH);
+	digitalWrite(IOCntrl.Charge_EN, LOW);
 	//delay(300000);
 	////digitalWrite(ANE_En, HIGH);
 	//delay(3000);
@@ -86,7 +89,14 @@ void init_GPIO()
 	//Enable Pin Change ISR
 	*digitalPinToPCMSK(IOCntrl.BATT_ALRT) |= bit(digitalPinToPCMSKbit(IOCntrl.BATT_ALRT));  // enable pin
 	PCIFR |= bit(digitalPinToPCICRbit(IOCntrl.BATT_ALRT)); // clear any outstanding interrupt
-	//PCICR |= bit(digitalPinToPCICRbit(IOCntrl.BATT_ALRT)); // enable interrupt for the group
+	PCICR |= bit(digitalPinToPCICRbit(IOCntrl.BATT_ALRT)); // enable interrupt for the group
+
+	// Watchpuppy pin change ISR
+	*digitalPinToPCMSK(IOCntrl.WAKE) |= bit(digitalPinToPCMSKbit(IOCntrl.WAKE));  // enable pin
+	PCIFR |= bit(digitalPinToPCICRbit(IOCntrl.WAKE)); // clear any outstanding interrupt
+	PCICR |= bit(digitalPinToPCICRbit(IOCntrl.WAKE)); // enable interrupt for the group
+
+
 }
 
 void init_vars()
@@ -99,6 +109,7 @@ void init_vars()
 	MstrISR.RTC_count = 0;
 	MstrISR.pulseSkip = 1;
 	MstrISR.Tmr2Cnt = 0;
+	MstrISR.WP_Alert = 0;
 
 	MstrData.gustAvg = 0;
 	MstrData.weather.gustMax = 0;
@@ -248,3 +259,9 @@ void setup_timer2()
 
 
 
+void setup_watchpuppy()
+{
+	digitalWrite(IOCntrl.DONE, HIGH);
+	delay(1);
+	digitalWrite(IOCntrl.DONE, LOW);
+}

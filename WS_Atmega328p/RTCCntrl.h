@@ -45,7 +45,12 @@ void RTC_SetAlarm_MeasInterval()  // input in minutes
 	if (MstrCntrl.Meas_Int < 1.0) {
 		Serial.println("Setting Alarm");
 		//setAlarm(ALARM_TYPES_t alarmType, byte seconds, byte minutes, byte hours, byte daydate)
-		RTC.setAlarm(ALM1_MATCH_SECONDS, (byte)((MstrCntrl.time.Second + ((uint8_t)(MstrCntrl.Meas_Int * 60))) % 60), 0, 0, 1);    //daydate parameter should be between 1 and 7
+
+		Serial.println((byte)(MstrCntrl.time.Second + (uint8_t)((int)(MstrCntrl.Meas_Int * 60) % 60)));
+
+		uint8_t temp = (uint8_t)((int)(MstrCntrl.Meas_Int * 60));
+		RTC.setAlarm(ALM1_MATCH_SECONDS, (byte)((MstrCntrl.time.Second + temp) % 60), 0, 0, 1);    //daydate parameter should be between 1 and 7
+		//RTC.setAlarm(ALM1_MATCH_SECONDS, (byte)((MstrCntrl.time.Second + 5)%60), 0, 0, 1);    //daydate parameter should be between 1 and 7
 		RTC.alarm(ALARM_1);                   //ensure RTC interrupt flag is cleared
 		RTC.alarmInterrupt(ALARM_1, true);
 	}

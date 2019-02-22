@@ -22,8 +22,8 @@
 #define maxGustLimMPH 114
 #define minGustLimMPH 1.5
 
-#define maxGustLimuS 24000 //round((1/(maxGustLimMPH/60))/1e-6/22)
-#define minGustLimuS 1818182 //round((1/(minGustLimMPH/60))/1e-6/22)
+#define maxGustLimuS 24 //round((1/(maxGustLimMPH/60))/1e-6/22)
+#define minGustLimuS 1818 //round((1/(minGustLimMPH/60))/1e-6/22)
 
 
 
@@ -38,7 +38,7 @@ MAX17048            pwr_mgmt;
 wxSFStruct              wxSF;
 nativeData       sampledData;
 IOStruct             IOCntrl;
-DS3232RTC                RTC = DS3232RTC(false);
+//DS3232RTC                RTC;// = DS3232RTC(false);
 volatile PulseStruct MstrISR;
 
 volatile unsigned long Tmr2Cnt;

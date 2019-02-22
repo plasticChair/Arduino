@@ -33,34 +33,28 @@ void setup()
 	setup_pwrSave();
 
 
-	//fram.write8(FRAM_MEM_POINTER_Addr,0);
-	//fram.write8(FRAM_NUM_P0INTS_Addr, 0);
+	fram.write8(FRAM_MEM_POINTER_Addr,0);
+	fram.write8(FRAM_NUM_P0INTS_Addr, 0);
 
-	Serial.println("HE11111111");
-	//Wire.
-	setup_RTC();
 
-	Serial.println("HEREERE");
+	Wire.begin();
+	//setup_RTC();
+
 	//Set Time
-	RTC.set(1, 1, 1, 1, 1, 1,19);
+	RTC.set(10, 1, 1, 1, 1, 1,19);
 	
-	//RTC_SetAlarm_MeasInterval();
+	RTC_SetAlarm_MeasInterval();
 	//RTC_SetAlarm_AneInterval();
 	//byte set(byte seconds_in, byte minutes_in, byte hour_in, byte wday_in, byte day_in, byte month_in, byte year_in);
-
+	setup_watchpuppy();
 	
-	//RTC_SetAlarm_MeasInterval();
+	GPIO_dance();
 
-	Serial.println(micros());
-	Serial.println(micros());
-	Serial.println(micros());
-	Serial.println(micros());
-	Serial.println(micros());
-
-	delay(10);
-	sleep();
-	
 	Serial.println("Done with Setup");
+
+	//sleep();
+	
+	
 	//delay(5);
 }
 
@@ -80,9 +74,10 @@ void loop()
 	//MstrCntrl.serviceRTCISR = 1;
 	/*--------------------------------------*/
 	/* ------------  Store Data ------------*/
-	MstrISR.serviceRTCISR = 0;
+	//MstrISR.serviceRTCISR = 0;
 	if (MstrISR.serviceRTCISR) {
 
+		disable_timer2();
 		//disable INT PulseISR
 		detachInterrupt(digitalPinToInterrupt(IOCntrl.ANE_Pulse));
 		// Reset RTC Alarm
@@ -94,14 +89,12 @@ void loop()
 
 		//Check if 15 mins elapsed
 		breakTime(RTC.get(), MstrCntrl.time);
-		
 		if ((MstrCntrl.time.Minute - MstrCntrl.prevtime.Minute) >= MstrCntrl.Server_Int) {
 			MstrCntrl.prevtime = MstrCntrl.time;
 			MstrCntrl.Server_Tx_En = 1;
 		}
 
-
-
+		
 		//Interval Elapsed, Start collecting data
 		MstrCntrl.ANE_enable = 1;
 		digitalWrite(IOCntrl.ANE_En, !MstrCntrl.ANE_enable);
@@ -109,23 +102,24 @@ void loop()
 		
 		MstrISR.pulseSkip = 1;
 
-	//	delay(2000);
+		//delay(2000);
 		//Go to Sleep
 		sleep();
 
 
 		//wake up 
 
-		delay(10);
+	
 		printDateTime();
 		RTC_SetAlarm_MeasInterval();
-		Serial.println("3");
+		//Serial.println("3");
 
-
+		enable_timer2();
+		delay(10);
 		/*---------------------------------------------------------------------------------------*/
 		// Read wind data
 		Ane_ErrorStatus = anemometer.read(sampledData.speed, sampledData.dir);
-		Serial.println(Ane_ErrorStatus);
+		//Serial.println(Ane_ErrorStatus);
 		//error detect
 		if (Ane_ErrorStatus < 4)
 		{
@@ -137,7 +131,7 @@ void loop()
 		digitalWrite(IOCntrl.ANE_En, !MstrCntrl.ANE_enable);
 
 		Serial.print("Wind info:" + String(sampledData.speed) + ", " + String(sampledData.dir) + ", " + String(sampledData.gustMax));
-		Serial.println(String(MstrData.gustBuff[7]) + ", " + String(MstrData.gustBuff[6]) + ", " + String(MstrData.gustBuff[5]) + ", " + String(MstrData.gustBuff[4]) + ", " + String(MstrData.gustBuff[3]) + ", " + String(MstrData.gustBuff[2]) + ", " + String(MstrData.gustBuff[1]) + ", " + String(MstrData.gustBuff[0]) );
+		//Serial.println(String(MstrData.gustBuff[7]) + ", " + String(MstrData.gustBuff[6]) + ", " + String(MstrData.gustBuff[5]) + ", " + String(MstrData.gustBuff[4]) + ", " + String(MstrData.gustBuff[3]) + ", " + String(MstrData.gustBuff[2]) + ", " + String(MstrData.gustBuff[1]) + ", " + String(MstrData.gustBuff[0]) );
 
 
 		/*---------------------------------------------------------------------------------------*/
@@ -152,8 +146,9 @@ void loop()
 		/*-----------------*/
 		//Check battery level
 		sampledData.batteryV = pwr_mgmt.voltage();
-		sampledData.batteryP = 87.88; //pwr_mgmt.accuratePercent();
+		sampledData.batteryP = pwr_mgmt.accuratePercent();
 		Serial.println(sampledData.batteryV);
+		Serial.println(sampledData.batteryP);
 
 		/*-----------------*/
 		//Store Time
@@ -172,7 +167,7 @@ void loop()
 		MstrData.weather.speed    = (unsigned int)floatLimit(&sampledData.speed     , wxSF.windSF    , 0            , 114 , 0);
 		MstrData.weather.dir      = 0xff & tempDir;
 
-		MstrData.weather.gustMax  = (unsigned int)floatLimit(&sampledData.gustMax   , wxSF.gustSF    , 0            , 7201 , 0);
+		MstrData.weather.gustMax  = (unsigned int)floatLimit(&sampledData.gustMax   , wxSF.gustSF    , 0            , 2047, 0);
 
 		MstrData.weather.temp     = (unsigned int)floatLimit(&sampledData.temp      , wxSF.tempSF    , wxSF.tempOff , 65  , -30);
 		MstrData.weather.press    = (unsigned int)floatLimit(&sampledData.press     , wxSF.pressSF   , wxSF.pressOff, 1100, 900); //hPa
@@ -181,7 +176,7 @@ void loop()
 		MstrData.weather.batteryV = (unsigned int)floatLimit(&sampledData.batteryV  , wxSF.batteryVSF, wxSF.battOff , 4.2 , 3);
 		MstrData.weather.batteryP = (unsigned int)floatLimit(&sampledData.batteryP  , wxSF.batteryPSF, 0            , 100 , 0);
 
-
+		MstrData.weather.info = 0;
 		
 		storeData.weather = MstrData.weather;
 
@@ -189,13 +184,17 @@ void loop()
 		delay(10);
 
 		//Write to FRAM
+		
 		MstrCntrl.FRAM_Idx = fram.read8(FRAM_NUM_P0INTS_Addr);
+		MstrCntrl.FRAM_Idx != (fram.read8(FRAM_NUM_P0INTS_Addr+1) << 8);
 		Serial.println("Mem pointer: " + String(MstrCntrl.FRAM_Idx));
 
 		for (int ii = 0; ii < wxPackageSize; ii++) {
 			fram.write8(MstrCntrl.FRAM_Idx*FRAM_DATA_OFFSET + FRAM_CNTRL_OFFSET, storeData.TxData[ii]);
 		}
-		fram.write8(FRAM_NUM_P0INTS_Addr, fram.read8(FRAM_NUM_P0INTS_Addr)+1);
+		MstrCntrl.FRAM_Idx++;
+		fram.write8(FRAM_NUM_P0INTS_Addr, MstrCntrl.FRAM_Idx & 0xFF);
+		fram.write8(FRAM_NUM_P0INTS_Addr+1, MstrCntrl.FRAM_Idx >> 8);
 		
 		/*
 		Serial.println("-----DeCODE----");
@@ -221,11 +220,14 @@ void loop()
 		Serial.println((float)storeData.weather.batteryP *0.3922);
 		*/
 
-		attachInterrupt(digitalPinToInterrupt(IOCntrl.ANE_Pulse), PulseISRRoutine, FALLING);
-		MstrISR.pulseSkip = 1;
+		
 		MstrISR.serviceRTCISR = 0;
 		Serial.println("----------Saved Data---------");
 		delay(20);
+		attachInterrupt(digitalPinToInterrupt(IOCntrl.ANE_Pulse), PulseISRRoutine, FALLING);
+		MstrISR.pulseSkip = 1;
+		//Restart Timer2
+		//enable_timer2();
 	}
 
 
@@ -238,10 +240,12 @@ void loop()
 	/*---------------------------------------*/
 	if (MstrCntrl.Server_Tx_En)
 	{
-		RTC_ClearAlarm_Interval2();
+		//RTC_ClearAlarm_Interval2();
 		//Read RAM one line at time
-		MstrCntrl.FRAM_NumPoints = fram.read8(FRAM_NUM_P0INTS_Addr);
-		for (int ii = 0; ii < MstrCntrl.FRAM_NumPoints; ii++) {
+		MstrCntrl.FRAM_Idx = 0;
+		MstrCntrl.FRAM_Idx = fram.read8(FRAM_NUM_P0INTS_Addr);
+		MstrCntrl.FRAM_Idx |= (fram.read8(FRAM_NUM_P0INTS_Addr+1) << 8);
+		for (int ii = 0; ii < MstrCntrl.FRAM_Idx; ii++) {
 			for (int kk = 0; kk < wxPackageSize; kk++) {
 				storeData.TxData[kk] = fram.read8(kk + FRAM_DATA_OFFSET + ii * FRAM_DATA_OFFSET);
 				//Delete FRAM data
@@ -272,9 +276,9 @@ void loop()
 			BuffFull = 1;
 		}
 		avgGustData();
-		Serial.print("--------------");
-		Serial.println(MstrData.gustAvg);
-		Serial.println(MstrISR.pulseDt);
+		//Serial.println("--------------");
+		//Serial.println(MstrData.gustAvg);
+		//Serial.println(MstrISR.pulseDt);
 		if (BuffFull) {
 			findRunningPeaks();
 		//	Serial.print("-----");
@@ -286,55 +290,31 @@ void loop()
 		MstrISR.servicePulseISR = 0;
 		digitalWrite(11, LOW);
 	}
+	
 
+	//watch puppy
+	if (MstrISR.WP_Alert == 1) {
+		digitalWrite(IOCntrl.DONE, HIGH);
+		delay(1);
+		digitalWrite(IOCntrl.DONE, LOW);
+		MstrISR.WP_Alert = 0;
+	}
 
 
 	sleep();
 
-	//Serial.println("Sleep again");
-	//erial.println(MstrISR.pulseDt);
-	//delay(10);
 	
-	//Serial.println("dsfsdf");
-//	digitalWrite(6, HIGH);
-//	delay(1000);
-//	digitalWrite(6, LOW);
-//	delay(1000); 
-	//Serial.println(millis());
-	//Serial.println(Tmr2Cnt);
-	//delay(100);
-//	delay(1000);
-//	Serial.println(micros());
-//	Serial.println(MstrISR.Tmr2Cnt);
-//	digitalWrite(IOCntrl.LED1, !digitalRead(IOCntrl.LED1));
-	//Serial.println(micros());
-	//PORTD ^= (!((PIND >> 7) & 1) << 7);
 }
 
-/*
-ISR(TIMER2_OVF_vect) {
-	(*Tmr2CntPtr)++;               //Increments the interrupt counter
-	TCNT2 = 255;           //Reset Timer to 255 out of 255
-	TIFR2 = 0x00;          //Timer2 INT Flag Reg: Clear Timer Overflow Flag
-	
-	toggle = !toggle;
-	if (toggle) {
-		PORTB |= (1 << 3);
-	}
-	else {
-		PORTB &= (0 << 3);
-	}
-};
-*/
+
 
 
 /*------------------------------------------*/
 /*--------------- ISR Routine --------------*/
 /*------------------------------------------*/
 
-void PulseISRRoutine() {
-
-	//PCMSK &= ~_BV(PCINT1);
+void PulseISRRoutine() 
+{
 	if (MstrISR.pulseSkip) {
 		MstrISR.pulseCt = millis();
 		MstrISR.pulseSkip = 0;
@@ -343,17 +323,9 @@ void PulseISRRoutine() {
 	else {
 		MstrISR.pulseCt = millis();
 		MstrISR.pulseDt = MstrISR.pulseCt - MstrISR.pulsePt;
-	//	Serial.println(MstrISR.pulseDt);
-	//	delay(5);
-		//Serial.println(MstrISR.pulseCt);
-		MstrISR.servicePulseISR = 1;
+	
 		if (MstrISR.pulseDt > maxGustLimuS)
 		{
-			//Serial.println("-");
-			//PORTD ^= (!((PIND >> 7) & 1) << 7);
-
-
-			// This is called when the interrupt occurs, but I don't need to do anything in it
 			MstrISR.pulsePt = MstrISR.pulseCt;
 
 			if (MstrISR.pulseDt > minGustLimuS) {
@@ -367,20 +339,16 @@ void PulseISRRoutine() {
 
 		}
 	}
-
-		
 	EIFR = bit(INTF1);
-
 }
 
 
 
-void RTCISRRoutine() {
-	//Serial.println("IN ISR");
-	//MstrISR.serviceRTCISR = 1;
+void RTCISRRoutine() 
+{
+	MstrISR.serviceRTCISR = 1;
 	MstrISR.RTC_count++;
 	EIFR = bit(INTF0);
-	
 }
 
 ISR(PCINT2_vect) // handle pin change interrupt for D0 to D7 here
@@ -391,3 +359,10 @@ ISR(PCINT2_vect) // handle pin change interrupt for D0 to D7 here
 	}
 }
 
+ISR(PCINT1_vect) // handle pin change interrupt for D0 to D7 here
+{
+	if (digitalRead(IOCntrl.WAKE) == 0) {
+		Serial.println("Got Alert");
+		MstrISR.WP_Alert = 1;
+	}
+}

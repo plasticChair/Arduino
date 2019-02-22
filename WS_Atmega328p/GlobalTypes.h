@@ -3,7 +3,7 @@
 #include "Arduino.h"
 
 #define PulseBuffSize 8
-#define wxPackageSize 22
+#define wxPackageSize 28
 
 // Structure defines
 typedef struct ControlStruct {
@@ -16,8 +16,8 @@ typedef struct ControlStruct {
 	unsigned int  gustAvg;
 
 	//FRAM
-	byte FRAM_Idx;
-	byte FRAM_NumPoints;
+	unsigned int FRAM_Idx;
+	unsigned int FRAM_NumPoints;
 
 	//GPIO
 	bool ANE_enable;
@@ -54,12 +54,13 @@ typedef struct wxStruct {
 	unsigned int second   : 6;
 	byte         dir      : 4;
 	unsigned int speed    : 10;
-	unsigned int gustMax  : 10;
+	unsigned int gustMax  : 11;
 	unsigned int temp     : 10;
 	unsigned int press    : 10;
 	unsigned int humid    : 10;
 	unsigned int batteryV : 8;
 	unsigned int batteryP : 8;
+	unsigned int info     : 8;
 
 };
 
@@ -106,6 +107,7 @@ typedef struct PulseStruct {
 	int           RTC_count;
 	bool          pulseSkip;
 	unsigned long Tmr2Cnt;//timer 2
+	bool          WP_Alert;
 
 };
 
