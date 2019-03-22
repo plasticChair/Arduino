@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{738c90fb-fb5c-46d1-bd74-df241aefd867}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\_micro-api-readonly">
+      <UniqueIdentifier>{0b6358cc-cc9a-434b-973e-f003803e4fa5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\_micro-api-readonly\core">
+      <UniqueIdentifier>{46b1cb6c-a761-49e0-8e16-a5ddcabd6d9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\_micro-api-readonly\core\avr">
+      <UniqueIdentifier>{88a32d24-f364-4a12-a9bb-4e0ca256b404}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\_micro-api-readonly\core\USB">
+      <UniqueIdentifier>{df261ec0-6c15-4e88-a64b-83feb54357c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\_micro-api-readonly\libraries">
+      <UniqueIdentifier>{b865dc1d-426e-4a38-a2b1-c9eb9836bbdd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\pulse_asm.S">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </None>
+    <None Include="SAMD21_Timers.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="__vm\.SAMD21_Timers.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Arduino.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\binary.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Client.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\delay.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\HardwareSerial.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\IPAddress.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\itoa.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Print.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Printable.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\pulse.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Reset.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\RingBuffer.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\SERCOM.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Server.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Stream.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Tone.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Uart.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Udp.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\WCharacter.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\WInterrupts.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\wiring.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\wiring_analog.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\wiring_constants.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\wiring_digital.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\wiring_private.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\wiring_shift.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\WMath.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\WString.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\WVariant.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\avr\dtostrf.h">
+      <Filter>src\_micro-api-readonly\core\avr</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\avr\interrupt.h">
+      <Filter>src\_micro-api-readonly\core\avr</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\avr\io.h">
+      <Filter>src\_micro-api-readonly\core\avr</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\avr\pgmspace.h">
+      <Filter>src\_micro-api-readonly\core\avr</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\PluggableUSB.h">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\samd21_host.h">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\SAMD21_USBDevice.h">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\USBAPI.h">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\USBCore.h">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\USBDesc.h">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\USB_host.h">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\variants\arduino_zero\pins_arduino.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\variants\arduino_zero\variant.h">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\abi.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\IPAddress.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\main.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\new.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Print.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Reset.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\SERCOM.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Stream.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Tone.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\Uart.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\WMath.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\WString.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\CDC.cpp">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\PluggableUSB.cpp">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\cores\arduino\USB\USBCore.cpp">
+      <Filter>src\_micro-api-readonly\core\USB</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mosta\AppData\Local\arduino15\packages\arduino\hardware\samd\1.6.20\variants\arduino_zero\variant.cpp">
+      <Filter>src\_micro-api-readonly\core</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
