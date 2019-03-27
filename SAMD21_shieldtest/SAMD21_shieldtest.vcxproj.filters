@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="SAMD21_shieldtest.ino" />
+    <None Include="SAMD21_shieldtest2.ino" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.SAMD21_shieldtest.vsarduino.h">
@@ -39,5 +40,10 @@
     <ClInclude Include="setupFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SAMD21_shieldtest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

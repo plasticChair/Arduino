@@ -5,7 +5,7 @@
     <ProjectVersion>7.0</ProjectVersion>
     <ToolchainName>com.Atmel.ARMGCC.CPP</ToolchainName>
     <ProjectGuid>{8ba29ce6-9172-4121-8e5b-985b69581321}</ProjectGuid>
-    <avrdevice>ATSAMD21G18A</avrdevice>
+    <avrdevice>ATSAMD21E18A</avrdevice>
     <avrdeviceseries>none</avrdeviceseries>
     <OutputType>Executable</OutputType>
     <Language>CPP</Language>

@@ -1,7 +1,7 @@
 #include "LaCrosse_TX23.h"
 
 //DATA wire connected to arduino port 10
-LaCrosse_TX23 anemometer = LaCrosse_TX23(10);
+LaCrosse_TX23 anemometer = LaCrosse_TX23(PB1);
 unsigned long medianfilter(unsigned long input);
 
 
@@ -23,7 +23,7 @@ volatile unsigned long tempArray[] = {0,0,0,0,0,0,0};
 void setup()
 {
   Serial.begin(115200);
-  attachInterrupt(digitalPinToInterrupt(2),pulseISR,FALLING);
+  attachInterrupt(digitalPinToInterrupt(PD3),pulseISR,FALLING);
   
 }
 
@@ -49,8 +49,8 @@ void loop()
   {
     //Serial.println("Speed = " + String(speed*2.23694,2) + " mph");
     
-    //Serial.println("Speed = " + String(speed*2.23694,2) + " mph");
-    //Serial.println("Dir = " + dirTable[direction]); 
+    Serial.println("Speed = " + String(speed*2.23694,2) + " mph");
+    Serial.println("Dir = " + dirTable[direction]); 
 
 
      filtVal = 0;
@@ -60,15 +60,29 @@ void loop()
     {
       filtVal = filtVal + filtArray[ii];
     }
-    Serial.println(((float)filtVal)/7.0);
+    Serial.println(((float)(filtVal<<8))/7.0);
+    Serial.println((1.0/(((float)(filtVal<<8))/7.0))*60/22);
   }
   else
   {
-    Serial.println("Read error");
+ //   Serial.println("Read error");
   }
 
+      for (int ii = 0; ii < 7; ii++)
+    {
+      filtVal = filtVal + filtArray[ii];
+    }
+    unsigned long temp = filtVal;
+    float tempVal = ((float)(filtVal)/7.0);
+    
+    Serial.print(tempVal);
+    Serial.print(", ");
+    Serial.print((1.0/(((float)(filtVal*1e-6))/7.0))*60/22);
+    Serial.print(", ");
+    Serial.println((1.0/(((float)(((filtVal>>16)<<16)*1e-6))/7.0))*60/22);
+
 		//delay between succesive read requests must be at least 2sec, otherwise wind speed will read 0.
-	delay(2000);
+	delay(500);
 }
 
 void pulseISR()
@@ -82,7 +96,7 @@ void pulseISR()
     PrevTime = curTime;
     ISRFlag = 1;
 
-    filtArray[idx] = deltaT;
+    filtArray[idx] = deltaT ;
     idx++;
     if (idx > 6)
     {

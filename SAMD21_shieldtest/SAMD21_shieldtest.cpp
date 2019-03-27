@@ -21,7 +21,7 @@
 #include "General.h"
 #include <MKRGSM.h>
 #include "SAMD21_shieldtest.h"
-#include <LowPower.h>
+
 
 GSMClient client;
 GPRS gprs;
@@ -52,7 +52,7 @@ unsigned long baud = 115200;
 void setup()
 {
 
-	Serial1.begin(9600);
+	Serial1.begin(115200);
 	while (!Serial1);
 	SerialGSM.begin(baud);
 	while (!SerialGSM);
@@ -112,7 +112,7 @@ void setup()
 	SYSCTRL->DFLLCTRL.bit.RUNSTDBY = 0;
 	SYSCTRL->XOSC.bit.RUNSTDBY = 0;
 	
-	attachInterrupt(ANE_PULSE, pulseISR, LOW);
+	//attachInterrupt(ANE_PULSE, pulseISR, LOW);
 
 
 	//GCLK->GENDIV.reg = (GCLK_GENDIV_ID(4) | GCLK_GENDIV_DIV(0));
@@ -210,16 +210,6 @@ void printWind()
 //	Serial1.print("error is:");
 //	Serial1.println(error);
 	//delay(2000);
-}
-
-void pulseISR()
-{
-	state = !state;
-	printFlag = 1;
-
-	//Serial1.print("Got woke");
-	//delay(500);
-	//rtc.standbyMode();
 }
 
 

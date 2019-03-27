@@ -27,5 +27,4 @@
 #include "pins_arduino.h" 
 #include "variant.h" 
 #include "arduino.h"
-#include "SAMD21_shieldtest.ino"
-#include "SAMD21_shieldtest2.ino"
+#include "MKR1400_Wx.ino"

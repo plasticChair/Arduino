@@ -10,7 +10,7 @@
 
 void setup() {
   Serial.begin(115200);
-   pinMode(9,OUTPUT);
+   pinMode(11,OUTPUT);
   
   //DDRB |= (1 << PB1); // Set OCR1A to output
   
@@ -18,7 +18,7 @@ void setup() {
   TCCR1B = 0;
 
   //For normal mode, overflow vector
-  if(0)
+  if(1)
   {
     TCNT1 = 49911;  // 4, Hz65536 - fclock/(prescale * rate)
     TCCR1B |= (1 << CS12) | (0 << CS11) | (1 << CS10); //Prescaler of 1024
@@ -60,6 +60,7 @@ ISR(TIMER1_OVF_vect)
 {
   Serial.println(millis());
   TCNT1 = 49911;
+  digitalWrite(11, !digitalRead(11));
 }
 
 

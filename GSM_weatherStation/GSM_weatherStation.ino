@@ -1,7 +1,7 @@
 #include "LaCrosse_TX23.h"
 
 //DATA wire connected to arduino port 10
-LaCrosse_TX23 anemometer = LaCrosse_TX23(10);
+LaCrosse_TX23 anemometer = LaCrosse_TX23(PB1);
 unsigned long medianfilter(unsigned long input);
 
 
@@ -49,9 +49,9 @@ void loop()
   {
     //Serial.println("Speed = " + String(speed*2.23694,2) + " mph");
     
-    //Serial.println("Speed = " + String(speed*2.23694,2) + " mph");
-    //Serial.println("Dir = " + dirTable[direction]); 
-
+    Serial.println("Speed = " + String(speed*2.23694,2) + " mph");
+    Serial.println("Dir = " + dirTable[direction]); 
+/*
 
      filtVal = 0;
     Serial.print(String(speed*2.23694,2));
@@ -61,6 +61,7 @@ void loop()
       filtVal = filtVal + filtArray[ii];
     }
     Serial.println(((float)filtVal)/7.0);
+    */
   }
   else
   {

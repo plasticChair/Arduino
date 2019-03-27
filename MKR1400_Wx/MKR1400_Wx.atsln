@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Atmel Studio Solution File, Format Version 11.00
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "SAMD21_shieldtest", "SAMD21_shieldtest.cppproj", "{B0423EB6-F5D0-4ABD-A96B-F55BC6FDFD74}"
+Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "MKR1400_Wx", "MKR1400_Wx.cppproj", "{6FCC8C11-094C-4E8D-821D-90D9DF242911}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,9 +11,8 @@ Global
 		Release|ARM = Release|ARM
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B0423EB6-F5D0-4ABD-A96B-F55BC6FDFD74}.Debug|ARM.ActiveCfg = Debug|ARM
-		{B0423EB6-F5D0-4ABD-A96B-F55BC6FDFD74}.Debug|ARM.Build.0 = Debug|ARM
-		{B0423EB6-F5D0-4ABD-A96B-F55BC6FDFD74}.Release|ARM.ActiveCfg = Release|ARM
+		{6FCC8C11-094C-4E8D-821D-90D9DF242911}.Debug|ARM.ActiveCfg = Debug|ARM
+		{6FCC8C11-094C-4E8D-821D-90D9DF242911}.Release|ARM.ActiveCfg = Release|ARM
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
