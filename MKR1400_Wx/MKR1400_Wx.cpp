@@ -1,262 +1,173 @@
 ﻿/*
- * SAMD21_shieldtest.cpp
- *
- * Created: 3/20/2019 1:38:12 AM
- *  Author: mosta
- */ 
+* SAMD21_shieldtest.cpp
+*
+* Created: 3/20/2019 1:38:12 AM
+*  Author: mosta
+*/
 // Visual Micro is in vMicro>General>Tutorial Mode
-// 
+//
 /*
-	Name:       SAMD21_shieldtest.ino
-	Created:	3/15/2019 10:55:07 AM
-	Author:     DESKTOP-4LJLPCB\mosta
+Name:       SAMD21_shieldtest.ino
+Created:	3/15/2019 10:55:07 AM
+Author:     DESKTOP-4LJLPCB\mosta
 */
 
 // Define User Types below here or use a .h file
 //
 
-#include "GlobalTypes.h"
-#include <MKRGSM.h>
-#include "SAMD21_shieldtest.h"
 
+#include "MKR1400_Wx.h"
+
+#define debug_GSM_EN 0
+
+GSMBand band;
 GSMClient client;
 GPRS gprs;
-GSM gsmAccess;
+GSM gsmAccess = 1;
 
-#include "Arduino.h"
+// temp vars
+int specialRTC_flag = 0;
+int tempCount = 0;
+
+
 // Define Function Prototypes that use User Types below here or use a .h file
-//
+#define IS_MTB_ENABLED \
+REG_MTB_MASTER & MTB_MASTER_EN
+#define DISABLE_MTB \
+REG_MTB_MASTER = REG_MTB_MASTER & ~MTB_MASTER_EN
+#define ENABLE_MTB \
+REG_MTB_MASTER = REG_MTB_MASTER | MTB_MASTER_EN
 
-volatile int flag = 0;
-volatile int state = LOW;
-volatile int printFlag = 0;
-volatile unsigned long timeNow = 0;
-volatile unsigned long timeLast = 0;
-volatile unsigned long timeDiff = 0;
-
-volatile bool update = 0;
-volatile uint32_t countVal = 0;
-uint32_t sampleRate = 2;
-// Define Functions below here or use other .ino or cpp files
-//
-bool tcIsSyncing();
-void tcDisable();
-void tcStartCounter();
-void pulseISR();
-
-void enterSleep();
-//#define SerialGSM Serial2
+__attribute__((aligned(1024)))
+volatile char __tracebuffer__[1024];
+volatile int __tracebuffersize__ = sizeof(__tracebuffer__);
+void InitTraceBuffer()
+{
+	int index = 0;
+	uint32_t mtbEnabled = IS_MTB_ENABLED;
+	DISABLE_MTB;
+	for(index =0; index<1024; index++)
+	{
+		__tracebuffer__[index];
+		__tracebuffersize__;
+	}
+	if(mtbEnabled)
+	ENABLE_MTB;
+}
+	
 
 
-// The setup() function runs once each time the micro-controller starts
-unsigned long baud = 115200;
 void setup()
 {
+	/* ----- Init vals ----- */
+	init_vars();
 
-	Serial1.begin(115200);
-	while (!Serial1);
-  SerialGSM.begin(baud);
-  while (!SerialGSM);
+	/* ----- GPIOs ----- */
 	GPIOSetup();
 	GPIODefaults();
+	digitalWrite(GPLED2, LED_ON);
 	GPIO_dance();
-	Serial1.println("Starting...");
+
+	/* ----- Anemometer ----- */
 	Anemometer_Enable();
 
+	/* ----- Power Mode ----- */
+	powerSave();
 
+	/* ----- Timer ----- */
+	timerSetup();
 
-pinMode(GSM_RESETN, OUTPUT);
-digitalWrite(GSM_RESETN, HIGH);
-delay(100);
-//digitalWrite(GSM_RESETN, LOW);
-
-delay(100);
-SerialGSM.println("AT+UPSV");
-delay(100);
-SerialGSM.println("AT+CPWROFF");
-
-
-	digitalWrite(GPLED2, LED_OFF);
+	/* ----- GSM ----- */
+	GSM_Disable();
 	delay(100);
 
+	#if debug_GSM_EN
+		GSM_Enable();
+		delay(8000);
+		//GSM_PowerSave();
+	#endif
+
+	/* ----- Peripherals ----- */
+	setup_BME280();
+	setup_fram();
+	setup_battMang();
 
 
+	/* ----- RTC ----- */
+	rtcTime.currTime.sec = 5;
+	rtcTime.currTime.min = 55;
+	rtcTime.currTime.hour = 0;
+	rtcTime.currTime.day = 3;
+	rtcTime.currTime.month = 4;
+	rtcTime.currTime.year = 5;
+	rtcSetup();
+	delay(10);
+	rtcSetAlarm(0, MstrCntrl.measInterval);
+	rtcEnable();
+	rtcUpdateTime();
 
-
-//	SYSCTRL->OSC32K.bit.ENABLE = 0;
-	//SYSCTRL->XOSC32K.bit.ENABLE = 0;
-
-	SYSCTRL->OSC32K.bit.RUNSTDBY = 0;
-	SYSCTRL->BOD33.bit.ENABLE = 0;
-	SYSCTRL->BOD33.bit.RUNSTDBY = 0;
-
-	SYSCTRL->DFLLCTRL.bit.RUNSTDBY = 0;
-	SYSCTRL->XOSC.bit.RUNSTDBY = 0;
-	
-	
-	
-	//Disable clocks
-	//PM->APBBMASK.reg &= ~PM_APBBMASK_PORT;  // needed for int
-	PM->APBBMASK.reg &= ~PM_APBBMASK_DMAC;
-	//PM->APBCMASK.reg &= ~PM_APBCMASK_SERCOM0;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_SERCOM1;
-//	PM->APBCMASK.reg &= ~PM_APBCMASK_SERCOM2;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_SERCOM3;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_SERCOM4;
-//	PM->APBCMASK.reg &= ~PM_APBCMASK_SERCOM5;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_TCC0;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_TCC1;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_TCC2;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_TC6;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_TC7;
-	//PM->APBCMASK.reg &= ~CLK_TC4_APB;
-	//PM->APBCMASK.reg &= ~PM_APBCMASK_TC5;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_ADC;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_DAC;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_I2S;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_PTC;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_AC;
-	PM->APBCMASK.reg &= ~PM_APBCMASK_PAC2;
-
-
- SYSCTRL->XOSC32K.bit.RUNSTDBY=0;
- USB->HOST.CTRLA.bit.RUNSTDBY=0;
- SYSCTRL->OSC32K.bit.RUNSTDBY=0;
- SYSCTRL->OSC8M.bit.RUNSTDBY=0;
- SYSCTRL->DFLLCTRL.bit.RUNSTDBY=0;
- SYSCTRL->DPLLCTRLA.bit.RUNSTDBY=0;
- SYSCTRL->BOD33.bit.RUNSTDBY=0;
-// SYSCTRL->VREG.bit.RUNSTDBY=0;
- //GCLK->GENCTRL.bit.RUNSTDBY=0;
-// SYSCTRL->VREG.bit.RUNSTDBY=0;
- TCC0->CTRLA.bit.RUNSTDBY=0;
- SERCOM0->USART.CTRLA.bit.RUNSTDBY=0;
- SERCOM1->USART.CTRLA.bit.RUNSTDBY=0;
- SERCOM2->USART.CTRLA.bit.RUNSTDBY=0;
- SERCOM3->USART.CTRLA.bit.RUNSTDBY=0;
- SERCOM4->USART.CTRLA.bit.RUNSTDBY=0;
- SERCOM5->USART.CTRLA.bit.RUNSTDBY=0;
- SERCOM0->SPI.CTRLA.bit.RUNSTDBY=0;
- SERCOM1->SPI.CTRLA.bit.RUNSTDBY=0;
- SERCOM2->SPI.CTRLA.bit.RUNSTDBY=0;
- SERCOM3->SPI.CTRLA.bit.RUNSTDBY=0;
- SERCOM4->SPI.CTRLA.bit.RUNSTDBY=0;
- SERCOM5->SPI.CTRLA.bit.RUNSTDBY=0;
- ADC->CTRLA.bit.RUNSTDBY=0;
- DAC->CTRLA.bit.RUNSTDBY=0;
- AC->CTRLA.bit.RUNSTDBY=0;
- TCC0->CTRLA.bit.RUNSTDBY=0;
- TCC1->CTRLA.bit.RUNSTDBY=0;
- TCC2->CTRLA.bit.RUNSTDBY=0;
- USB->HOST.CTRLA.bit.RUNSTDBY=0;
- USB->DEVICE.CTRLA.bit.RUNSTDBY=0;
- 
-
-
-	//AHBMASK:  CLK_HPBA_AHB CLK_HPBB_AHB CLK_HPBC_AHB CLK_DSU_AHB CLK_NVMCTRL_AHB CLK_DMAC_AHB CLK_USB_AHB
-	//APBAMASK:  CLK_PAC0_APB CLK_PM_APB CLK_SYSCTRL_APB CLK_GCLK_APB CLK_WDT_APB CLK_RTC_APB CLK_EIC_APB
-	//APBBMASK:  CLK_PAC1_APB CLK_DSU_APB CLK_NVMCTRL_APB CLK_PORT_APB CLK_DMAC_APB CLK_USB_APB
-	//APBCMASK:  CLK_SERCOM0_APB CLK_SERCOM1_APB CLK_SERCOM2_APB CLK_SERCOM3_APB CLK_SERCOM4_APB CLK_SERCOM5_APB CLK_TCC0_APB CLK_TCC1_APB CLK_TCC2_APB CLK_TC3_APB CLK_TC4_APB CLK_TC5_APB CLK_ADC_APB CLK_DAC_APB
-
-
-
-
-	// Gen Clock setup
-	GCLK->GENDIV.reg  = (uint32_t) (GCLK_GENDIV_ID(4) | GCLK_GENDIV_DIV(1));
-	while (GCLK->STATUS.bit.SYNCBUSY);
-	
-	GCLK->GENCTRL.reg = (uint32_t) (GCLK_GENCTRL_RUNSTDBY | GCLK_GENCTRL_GENEN | GCLK_GENCTRL_SRC_OSCULP32K | GCLK_GENCTRL_ID(4));
-	while (GCLK->STATUS.bit.SYNCBUSY);
-	
-	GCLK->CLKCTRL.reg = (uint16_t) (GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK4 | GCLK_CLKCTRL_ID(GCM_TC4_TC5)) ;  //set up for generic clock gen 4 and using TC 4
-	while (GCLK->STATUS.bit.SYNCBUSY);
-	
-		// Gen Clock setup
-		GCLK->GENDIV.reg  = (uint32_t) (GCLK_GENDIV_ID(5) | GCLK_GENDIV_DIV(1));
-		while (GCLK->STATUS.bit.SYNCBUSY);
-		
-		GCLK->GENCTRL.reg = (uint32_t) (GCLK_GENCTRL_RUNSTDBY | GCLK_GENCTRL_GENEN | GCLK_GENCTRL_SRC_OSCULP32K | GCLK_GENCTRL_ID(5));
-		while (GCLK->STATUS.bit.SYNCBUSY);
-		
-		GCLK->CLKCTRL.reg = (uint16_t) (GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK4 | GCLK_CLKCTRL_ID(GCM_TC4_TC5)) ;  //set up for generic clock gen 4 and using TC 4
-		while (GCLK->STATUS.bit.SYNCBUSY);
-
-	//////////////////////////////
-	//TC3 Setup
-	//Enable CLK_TCx_APB
-	PM->APBCMASK.reg |= PM_APBCMASK_TC4;
-	PM->APBCMASK.reg |= PM_APBCMASK_TC5;
-
-
-	TC4->COUNT16.CTRLA.reg = TC_CTRLA_SWRST;
-	while (TC4->COUNT16.STATUS.reg & TC_STATUS_SYNCBUSY);
-	while (TC4->COUNT16.CTRLA.bit.SWRST);
-	TC4->COUNT16.CTRLA.reg &= ~TC_CTRLA_ENABLE;    // Disable TC3
-	
-	//Setup here
-	TC4->COUNT32.CTRLA.reg = (uint32_t) (TC_CTRLA_RUNSTDBY | TC_CTRLA_MODE_COUNT32);
-	while (tcIsSyncing());
-	TC4->COUNT32.CTRLA.reg |= TC_CTRLA_PRESCALER_DIV1  |TC_CTRLA_ENABLE;    // Enable TC3
-	TC4->COUNT32.CC[0].reg = (uint32_t) (SystemCoreClock / sampleRate - 1);
-	while (tcIsSyncing());
-	
-
-	// Configure interrupt request
-//	NVIC_DisableIRQ(TC4_IRQn);
-//	NVIC_ClearPendingIRQ(TC4_IRQn);
-	//NVIC_SetPriority(TC4_IRQn, 0);
-	//NVIC_EnableIRQ(TC4_IRQn);
-	
-	
-	TC4->COUNT32.INTENSET.bit.MC0 = 1;
-	while (tcIsSyncing()); //wait until TC5 is done syncing
-	
-	
-
-	 SYSCTRL->VREG.bit.RUNSTDBY = 1;
-	 SYSCTRL->DFLLCTRL.bit.RUNSTDBY = 0;
-	// USBDevice.detach();
+	/* ----- ISR ----- */
+	rtc.attachInterrupt(rtcISR);
 	attachInterrupt(digitalPinToInterrupt(ANE_PULSE), pulseISR, FALLING);
-	
-	
-	
-	PM->APBAMASK.reg |= PM_APBAMASK_EIC;
-	
+	EIC_Setup();
+	measTime_SeverTx = (rtcTime.currTime.min + MstrCntrl.serverInterval) % 60;
 
-		
-	GCLK->CLKCTRL.reg = (uint16_t) (GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK4 | GCLK_CLKCTRL_ID(GCM_EIC)) ;  //set up for generic clock gen 4 and using TC 4
-	while (GCLK->STATUS.bit.SYNCBUSY);
-
-	 EIC->WAKEUP.reg = EIC_WAKEUP_WAKEUPEN2;
-	 
-	 
-	digitalWrite(GPLED2, LED_OFF);
-
-
-	
+	/* ----- User ----- */
 	Serial1.println("Entering Loop...");
-	delay(100);
+	delay(10);
+	digitalWrite(GPLED2, LED_OFF);
+	//enterSleep();
 
-	digitalWrite(GPLED2, LED_ON);
-	enterSleep();
-//
+	//--------- Check battery voltage and sleep if low
+	LPModeCheck();
+	
+	Serial1.println(serverData.server);
+	Serial1.println(serverData.serverIP);
+	Serial1.println("Connecting....");
+
+
+	// reset mem pointer, debug only
+	fram.write8(FRAM_NUM_P0INTS_Addr, 0);
+	fram.write8(FRAM_MEM_POINTER_Addr, 0);
+	Serial1.println("Starting ********************************************");
+
+	InitTraceBuffer();
+	MstrCntrl.sleepSingle = true;
 }
 
 void pulseISR()
 {
-	detachInterrupt(digitalPinToInterrupt(A1));
-	//EIC->EVCTRL.bit.EXTINTEO2 = 0;
-	countVal = TC4->COUNT32.COUNT.bit.COUNT;
-	if (countVal >1000){
-		state = !state;
-		update = true;
-		TC4->COUNT32.COUNT.bit.COUNT = (uint32_t) (0);
-		while(tcIsSyncing());
-		
-	}
-	//EIC->EVCTRL.bit.EXTINTEO2 = 1;
+	detachInterrupt(digitalPinToInterrupt(ANE_PULSE));
 
-	attachInterrupt(digitalPinToInterrupt(A1), pulseISR, FALLING);
+	EIC->EVCTRL.bit.EXTINTEO2 = 0;
+	pulseData.countVal = TC4->COUNT32.COUNT.bit.COUNT;
+	if ((TC4->COUNT32.COUNT.bit.COUNT >700) && (pulseData.RTCFlag == false)) {  // min time between pulses,  )
+		// Reset counter
+		tcReset();
+
+		// Set flags
+		PulseISR_flag = true;
+		PulseLed_state = !PulseLed_state;
+
+		// Median filter
+		medGustData();
+
+		// Store in circular buffer
+		pulseData.buffer[pulseData.buffIdx] = pulseData.countVal;
+		pulseData.buffIdx++;
+		if (pulseData.buffIdx >= PULSEDT_BUFFLENGTH) {
+			pulseData.buffIdx = 0;
+			findRunningPeaks();
+		}
+	}
+	else {
+		// Handle RTC
+		pulseData.RTCFlag = false;
+		tcReset();
+	}
+	EIC->EVCTRL.bit.EXTINTEO2 = 1;
+	attachInterrupt(digitalPinToInterrupt(ANE_PULSE), pulseISR, FALLING);
+	
 }
 
 
@@ -264,100 +175,223 @@ void pulseISR()
 // Add the main program code into the continuous loop() function
 void loop()
 {
-	//Serial1.begin(9600);
 
-	//Serial1.print("Got woke");
-	//delay(500);
-	if (printFlag)
-	{
-		timeLast = micros();
-		timeDiff = timeLast - timeNow;
-		timeNow = timeLast;
-		Serial1.println(timeDiff);
-		printFlag = 0;
-		digitalWrite(GPLED2, state);
-		delay(10);
-
+	/*---------------------------------------*/
+	//  Pulse ISR Flag
+	/*---------------------------------------*/
+	if (PulseISR_flag) {
+		//Serial1.print("Pulse is: ");
+		//Serial1.println(pulseData.countVal);
+		//	Serial1.println(1.0F/(pulseData.countVal/32768.0F) * 60.0F/54.0F);
+		PulseISR_flag = false;
+		//	delay(10);
+		//	digitalWrite(GPLED2,PulseLed_state);
 	}
-	//	rtc.standbyMode();
-	if (update)
-	{
-		//Serial1.println((float)countVal / 32768.0F);
-		Serial1.println(countVal);
-		update = false;
+
+
+	/*---------------------------------------*/
+	//  Capture Data
+	/*---------------------------------------*/
+	if (rtcISR_flag && !MstrCntrl.sleepModeEn) {
+		detachInterrupt(digitalPinToInterrupt(ANE_PULSE));
+		tcReset();
+		rtcISR_flag = 0;
+		MstrCntrl.RTCUpdateFlag = 1;
+		/*-----Notify and reset RTC------*/
+		Serial1.println("Measure sensors ---------------");
+		tempCount++;
+		Serial1.println(tempCount);
+		// Setup RTC
+		rtcSetAlarm(0, MstrCntrl.measInterval);
+		rtcUpdateTime();
+		
+		// Get data
+		//collectData();
+		saveData();
+		framSaveData();
+		//LPModeCheck();
+
+		// Prepare for sending GSM data
+		if ((measTime_SeverTx - rtcTime.currTime.min) <= 1) {
+			sendData_flag = true;
+			#if debug_GSM_EN
+				GSM_Enable();
+				delay(8000);
+				//GSM_PowerSave();
+			#endif
+		}
+
+		//Check night time, if between hours of sleep and be sure this only happens once
+		if (((rtcTime.currTime.hour >= MstrCntrl.sleepHour) || (rtcTime.currTime.hour <= MstrCntrl.wakeupHour)) && MstrCntrl.sleepSingle){
+			Serial1.println("----------------- Sleep En --------------------------");
+			printCurTime();
+			MstrCntrl.sleepModeEn = true;
+			MstrCntrl.sleepModeSet = true;
+			measTime_SeverTx = rtcTime.currTime.min;
+			sendData_flag = true;
+		}
+		if (rtcTime.currTime.hour >= MstrCntrl.sleepHour){
+			MstrCntrl.sleepSingle = true;
+		}
+
+		attachInterrupt(digitalPinToInterrupt(ANE_PULSE), pulseISR, FALLING);
+		printCurTime();
+		Serial1.println("End RTc Sample");
 		delay(10);
-		digitalWrite(A5,state);
-
 	}
+
+
+
+	/*---------------------------------------*/
+	//  Server Send
+	/*---------------------------------------*/
+	if ((rtcTime.currTime.min == measTime_SeverTx) && sendData_flag) {
+		Serial1.println("Send data to Server");
+		sendData_flag = 0;
+		resetMaxGust();
+
+		// Get data
+		rtcUpdateTime();
+		framReadData();
+		
+		if (MstrCntrl.FRAM_NumPoints > 0){
+			//Send data
+			buildJSON();
+			#if debug_GSM_EN
+				connectGPRS();
+				getSignalStrength();
+				MstrData.weather.signalRSSI = sampledData.rssi;
+				sendPost(JSONArray);
+				readGPRSResponse();
+			#endif
+		}	
+		
+		// Reset global array
+		JSONArray[0] = 0;
 	
-	Serial1.println("Going to sleep");
-	delay(10);
-	enterSleep();
+		// reset FRAM
+		fram.write8(FRAM_NUM_P0INTS_Addr, 0);
+		fram.write8(FRAM_MEM_POINTER_Addr, 0);
+
+		// Set new time
+		measTime_SeverTx = (rtcTime.currTime.min + MstrCntrl.serverInterval) % 60;
+		rtcSetAlarm(0, MstrCntrl.measInterval);
+		
+		printCurTime();
+		delay(1);
+	}
 
 
-	
+	/*---------------------------------------*/
+	//  Set night time sleep mode
+	/*---------------------------------------*/
+	if (MstrCntrl.sleepModeEn &&  MstrCntrl.sleepModeSet) {
+		Serial1.println("set night time sleep mode");
+
+		printCurTime();
+		rtcSetAlarm(6, 0); // 8 hours later, change to certain time
+
+		//Dettach interrupt
+ 		tcReset();
+		rtcISR_flag = 0;
+
+		Anemometer_Disable();
+		GSM_Disable();
+
+		//Add sleep to BME280 and batt management
+
+		rtcUpdateTime();
+		
+		//Only set sleep mode once
+		 MstrCntrl.sleepModeSet = false;
+	}
+
+
+	/*---------------------------------------*/
+	//  Handle night time sleep mode wake up
+	/*---------------------------------------*/
+	if ((rtcTime.currTime.hour >= MstrCntrl.wakeupHour) && (rtcTime.currTime.hour < MstrCntrl.sleepHour) && (MstrCntrl.sleepModeEn)) {
+		MstrCntrl.sleepModeEn = false;
+		MstrCntrl.sleepSingle = false;
+		Serial1.println("----------------- Wake up from Sleep ----------------");
+		#if debug_GSM_EN
+			GSM_Enable();
+			//delay(10000);
+			connectGPRS();
+			findIP(serverData.server, serverData.serverIP, PORT_IP);
+			setFromGSMTime();
+		#endif
+		rtcUpdateTime();
+		Anemometer_Enable();
+		rtcSetAlarm(0, MstrCntrl.measInterval);
+		measTime_SeverTx = (rtcTime.currTime.min + MstrCntrl.serverInterval) % 60;
+		tcReset();
+		attachInterrupt(digitalPinToInterrupt(ANE_PULSE), pulseISR, FALLING);
+	}
+
+	/*---------------------------------------*/
+	//  Handle Low Power Situation
+	/*---------------------------------------*/
+	if ((MstrCntrl.LP_Mode == 1)  && (MstrCntrl.RTCUpdateFlag == 1))
+	{
+		Serial1.println("Check for LPM");
+		MstrCntrl.RTCUpdateFlag = 0;
+		//Remove low power mode if > 3.6V
+		if (sampledData.batteryV >= 3.6)
+		{
+			Serial1.println("-----------set LP state OFF");
+			//	MstrData.weather.LowPwrMode = 0;
+			MstrCntrl.LP_Mode = 0;
+			MstrCntrl.serverInterval = ServerTx_INTERVAL;
+			MstrCntrl.measInterval = MEAS_INTERVAL;
+		}
+		//low power mode if < 3.35V, increase interval every time
+		if (sampledData.batteryV <= 3.35)
+		{
+			Serial1.print("------------- set LP state again - ");
+			Serial1.println(sampledData.batteryV);
+			Serial1.println(MstrCntrl.measInterval);
+			//MstrData.weather.LowPwrMode = 1;
+			MstrCntrl.measInterval += MEAS_INTERVAL;
+		}
+	}
+
+	//Serial1.println("Going to sleep");
+	//delay(10);
+	//enterSleep();
+
+	// degug only
+	if(specialRTC_flag == 1){
+		specialRTC_flag = 0;
+		digitalWrite(GPLED2, !digitalRead(GPLED2));
+		printCurTime();
+	}
 
 
 }
 
-void printWind()
+void rtcISR()
 {
-	float tempSpeed = 0.0;
-	int tempDir = 0;
-	int error = 0;
+	rtcISR_flag = 1;
+	rtcUpdateTime();
 
-//	GPIO_dance();
-//	Serial1.begin(9600);
-//	Serial.begin(115200);
-//	while (!SerialUSB);
-
-	digitalWrite(GPLED2, LED_ON);
-	rtcTime.alarmTime.sec = rtc.getSeconds()  +3;
-	rtcSetAlarm();
-	rtcEnable();
-	//error = anemometer.read(tempSpeed, tempDir);
-	//Serial1.print("speed is:");
-	//Serial1.println(tempSpeed);
-	//Serial1.print("dir is:");
-//	Serial1.println(tempDir);
-//	Serial1.print("error is:");
-//	Serial1.println(error);
-	//delay(2000);
+specialRTC_flag = 1;
+//delay(3);
 }
 
 
-
-//this function gets called by the interrupt at <sampleRate>Hertz
-void TC4_Handler (void) {
-	//YOUR CODE HERE
-	
-	// END OF YOUR CODE
-	TC4->COUNT32.INTFLAG.bit.MC0 = 1; //don't change this, it's part of the timer code
+void TC4_Handler(void) {
+	TC4->COUNT32.INTFLAG.bit.MC0 = 1; //part of the timer code
 }
 
-
-//disable TC5
-void tcDisable()
+void lowPowerISR()
 {
-	TC4->COUNT32.CTRLA.reg &= ~TC_CTRLA_ENABLE;
-	while (tcIsSyncing());
+	MstrCntrl.LP_Mode = 1;
+	MstrCntrl.serverInterval += 15;
 }
 
-bool tcIsSyncing()
+void watchdogISR()
 {
-	return TC4->COUNT32.STATUS.reg & TC_STATUS_SYNCBUSY;
-}
-
-
-//This function enables TC5 and waits for it to be ready
-void tcStartCounter()
-{
-	TC4->COUNT32.CTRLA.reg |= TC_CTRLA_ENABLE; //set the CTRLA register
-	while (tcIsSyncing()); //wait until snyc'd
-}
-
-void enterSleep()
-{
-	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-	__WFI();
+	resetWatchDog();
+	rtcUpdateTime();
 }
